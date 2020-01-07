@@ -9,5 +9,5 @@ Prerequisites:
 
 - Create a virtual environment with ```py -m venv c:\path\to\myenv```
 - Activate the virtual environment with ```c:\path\to\myenv\Scripts\activate```
-- 
+- If you are working with Visual Studio Code or another IDE assure that the correct Python interpreter is selected (the one from the virtual environment created above)
 
