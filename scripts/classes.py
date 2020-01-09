@@ -13,11 +13,16 @@ class Footpath:
         self.walking_time = walking_time
 
 class Connection:
-    def __init__(self, from_stop_id, to_stop_id, dep_time, arr_time):
+    def __init__(self, trip_id, from_stop_id, to_stop_id, dep_time, arr_time):
+        self.trip_id = trip_id
         self.from_stop_id = from_stop_id
         self.to_stop_id = to_stop_id
         self.dep_time = dep_time
         self.arr_time = arr_time
+
+class Trip:
+    def __init__(self, trip_id, connections):
+        pass # TODO
 
 
 

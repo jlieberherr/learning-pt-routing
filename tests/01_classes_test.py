@@ -16,8 +16,12 @@ def test_footpath_constructor():
     assert 60 == a_footpath.walking_time
 
 def test_connection_constructor():
-    a_connection = Connection("1", "2", 60, 120)
+    a_connection = Connection("t1", "1", "2", 60, 120)
+    assert "t1" == a_connection.trip_id
     assert "1" == a_connection.from_stop_id
     assert "2" == a_connection.to_stop_id
     assert 60 == a_connection.dep_time
     assert 120 == a_connection.arr_time
+
+def test_trip_constructor():
+    pass # TODO
