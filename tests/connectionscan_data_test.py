@@ -1,8 +1,10 @@
-from scripts.classes import Stop, Footpath, Connection
+import pytest
+
+from scripts.classes import Connection, Footpath, Stop, Trip
 from scripts.connectionscan_router import ConnectionScanData
 
 
-def test_connectionscan_data_constructor():
+def test_connectionscan_data_constructor_basic():
     stops_per_id = {
         "1": Stop("1", "c1", "n1", 0.0, 0.0),
         "2": Stop("2", "c2", "n2", 1.0, 1.0),
@@ -19,6 +21,32 @@ def test_connectionscan_data_constructor():
         ("2a", "2"): Footpath("2a", "2", 75),
     }
 
-    trips_per_id = [] # TODO
+    trips_per_id = {
+        "t1": Trip("t1", [Connection("t1", "1", "2", 60, 70)])
+    }
     cs_data = ConnectionScanData(stops_per_id, footpaths_per_from_to_stop_id, trips_per_id)
     # TODO tests
+
+def test_connectionscan_data_constructor_stop_id_not_consistent():
+    with pytest.raises(ValueError):
+        ConnectionScanData({"s1": Stop("s2", "", "", 0.0, 0.0)}, {}, {})
+
+def test_connectionscan_data_constructor_from_stop_id_in_footpath_not_consistent():
+    with pytest.raises(ValueError):
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)}, {("s2", "s2"): Footpath("s1", "s1", 60)}, {})
+
+def test_connectionscan_data_constructor_to_stop_id_in_footpath_not_consistent():
+    with pytest.raises(ValueError):
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)}, {("s2", "s1"): Footpath("s2", "s2", 60)}, {})
+
+def test_connectionscan_data_constructor_stops_in_footpath_and_stops_not_consistent():
+    with pytest.raises(ValueError):
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {("s1", "s2"): Footpath("s1", "s2", 60)}, {})
+
+def test_connectionscan_data_constructor_trip_id_not_consistent():
+    with pytest.raises(ValueError):
+        ConnectionScanData({}, {}, {"t1": Trip("t", [])})
+
+def test_connectionscan_data_constructor_stop_ids_in_trips_not_consistent_with_stops():
+    with pytest.raises(ValueError):
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {}, {"t": Trip("t", [Connection("t", "s1", "s2", 30, 40)])})
