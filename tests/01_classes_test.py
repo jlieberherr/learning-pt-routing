@@ -1,4 +1,6 @@
-from scripts.classes import Connection, Footpath, Stop
+import pytest
+
+from scripts.classes import Connection, Footpath, Stop, Trip
 
 
 def test_stop_constructor():
@@ -15,7 +17,7 @@ def test_footpath_constructor():
     assert "2" == a_footpath.to_stop_id
     assert 60 == a_footpath.walking_time
 
-def test_connection_constructor():
+def test_connection_constructor_basic():
     a_connection = Connection("t1", "1", "2", 60, 120)
     assert "t1" == a_connection.trip_id
     assert "1" == a_connection.from_stop_id
@@ -23,5 +25,37 @@ def test_connection_constructor():
     assert 60 == a_connection.dep_time
     assert 120 == a_connection.arr_time
 
-def test_trip_constructor():
-    pass # TODO
+def test_connection_constructor_not_time_consistent():
+    with pytest.raises(ValueError):
+        Connection("t1", "1", "2", 60, 50)
+
+def test_trip_constructor_basic():
+    trip_id = "t1"
+    connections = [
+        Connection(trip_id, "s1", "s2", 60, 70),
+        Connection(trip_id, "s2", "s3", 72, 80),
+        Connection(trip_id, "s3", "s4", 82, 90),
+    ]
+    a_trip = Trip(trip_id, connections)
+    assert trip_id == a_trip.trip_id
+    assert 3 == len(a_trip.connections)
+    assert "s2" == a_trip.connections[1].from_stop_id
+    assert 90 == a_trip.connections[2].arr_time
+
+def test_trip_constructor_not_time_consistent():
+    trip_id = "t1"
+    connections = [
+        Connection(trip_id, "s1", "s2", 60, 70),
+        Connection(trip_id, "s2", "s3", 68, 80),
+    ]
+    with pytest.raises(ValueError):
+        Trip(trip_id, connections)
+
+def test_trip_constructor_not_stop_consistent():
+    trip_id = "t1"
+    connections = [
+        Connection(trip_id, "s1", "s2", 60, 70),
+        Connection(trip_id, "s3", "s4", 70, 80),
+    ]
+    with pytest.raises(ValueError):
+        Trip(trip_id, connections)
