@@ -21,11 +21,21 @@ def test_connectionscan_data_constructor_basic():
         ("2a", "2"): Footpath("2a", "2", 75),
     }
 
+    con_1_1 = Connection("t1", "1", "2", 60, 70)
+    con_1_2 = Connection("t1", "2", "3", 72, 80)
+
+    con_2_1 = Connection("t2", "2", "3", 50, 59)
+    con_2_2 = Connection("t2", "3", "1", 60, 72)
+
     trips_per_id = {
-        "t1": Trip("t1", [Connection("t1", "1", "2", 60, 70)])
+        "t1": Trip("t1", [con_1_1, con_1_2]),
+        "t2": Trip("t2", [con_2_1, con_2_2])
     }
     cs_data = ConnectionScanData(stops_per_id, footpaths_per_from_to_stop_id, trips_per_id)
-    # TODO tests
+    assert 4 == len(cs_data.stops_per_id)
+    assert 4 == len(cs_data.stops_per_id)
+    assert 2 == len(cs_data.trips_per_id)
+    assert [con_2_1, con_1_1, con_2_2, con_1_2] == cs_data.sorted_connections
 
 def test_connectionscan_data_constructor_stop_id_not_consistent():
     with pytest.raises(ValueError):

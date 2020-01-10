@@ -8,6 +8,9 @@ class Stop:
 
     def __str__(self):
         return "[id={}, code={}, name={}]".format(self.id, self.code, self.name)
+    
+    def __repr__(self):
+        return str(self)
 
 class Footpath:
     def __init__(self, from_stop_id, to_stop_id, walking_time):
@@ -17,6 +20,9 @@ class Footpath:
 
     def __str__(self):
         return "[from_stop_id={}, to_stop_id={}, walking_time={}]".format(self.from_stop_id, self.to_stop_id, self.walking_time)
+    
+    def __repr__(self):
+        return str(self)
 
 class Connection:
     def __init__(self, trip_id, from_stop_id, to_stop_id, dep_time, arr_time):
@@ -35,6 +41,9 @@ class Connection:
             self.to_stop_id, 
             self.dep_time, 
             self.arr_time)
+    
+    def __repr__(self):
+        return str(self)
 
 class Trip:
     def __init__(self, id, connections):
@@ -55,8 +64,10 @@ class Trip:
             self.connections[-1].to_stop_id if self.connections else "",
             self.connections[0].dep_time if self.connections else "",
             self.connections[-1].arr_time if self.connections else "",
-            len(self.connections)
-        )
+            len(self.connections))
+    
+    def __repr__(self):
+        return str(self)
 
     def get_all_from_stop_ids(self):
         return [c.from_stop_id for c in self.connections]

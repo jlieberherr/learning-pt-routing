@@ -31,7 +31,8 @@ class ConnectionScanData:
             raise ValueError("there are stop_ids in trips_per_id which do not accur as stop_id in stops_per_id: {}".format(stop_ids_in_trips_not_in_stops))
         self.trips_per_id = trips_per_id
 
-        # TODO create sorted connection array from trips
+        cons_in_trips = [t.connections for t in trips_per_id.values()]
+        self.sorted_connections = sorted([c for cons in cons_in_trips for c in cons], key=lambda c: (c.dep_time, c.arr_time))
 
 class ConnectionScanCore:
     def __init__(self, connection_scan_data):
