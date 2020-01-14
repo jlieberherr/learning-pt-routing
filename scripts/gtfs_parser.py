@@ -5,11 +5,14 @@ import csv
 from datetime import date
 from io import TextIOWrapper
 from zipfile import ZipFile
+import logging
 
 from scripts.classes import Footpath, Stop, Connection, Trip
 from scripts.connectionscan_router import ConnectionScanData
 
 ENCODING = "utf-8-sig" # we use utf-8-sig since gtfs-data from switzerland are encoded in utf-8-with-bom
+
+log = logging.getLogger(__name__)
 
 def get_index_with_default(header, column_name, default_value=None):
     return header.index(column_name) if column_name in header else default_value
@@ -28,6 +31,7 @@ def hhmmss_to_sec(hhmmss):
     
 
 def parse_gtfs(path_to_gtfs_zip, desired_date):
+    log.info("start parsing gtfs-file for desired date {} ({})".format(desired_date, path_to_gtfs_zip))
     stops_per_id = {}
     footpaths_per_from_to_stop_id = {}
     trips_per_id = {}
