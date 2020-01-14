@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import csv
 from datetime import date
 from io import TextIOWrapper

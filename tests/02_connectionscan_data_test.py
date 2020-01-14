@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import pytest
 
 from scripts.classes import Connection, Footpath, Stop, Trip

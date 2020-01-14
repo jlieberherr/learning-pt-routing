@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from builtins import id
 from datetime import date
 from zipfile import ZipFile

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 class ConnectionScanData:
     def __init__(self, stops_per_id, footpaths_per_from_to_stop_id, trips_per_id):
         # stops
