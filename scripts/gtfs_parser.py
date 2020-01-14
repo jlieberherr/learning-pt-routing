@@ -98,3 +98,14 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
                 else:
                     raise ValueError("as exception_type only 1 or 2 are permitted, but is: {}".format(exception_type))
     return service_available_at_date_per_service_id
+
+def get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id):
+    trip_available_at_date_per_trip_id = {}
+    with zip.open("trips.txt", "r") as gtfs_file:
+        reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+        header = next(reader)
+        trip_id_index = header.index("trip_id") # required
+        service_id_index = header.index("service_id") # required
+        for row in reader:
+            trip_available_at_date_per_trip_id[row[trip_id_index]] = service_available_at_date_per_service_id[row[service_id_index]]
+    return trip_available_at_date_per_trip_id
