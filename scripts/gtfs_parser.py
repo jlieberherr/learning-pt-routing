@@ -6,6 +6,8 @@ from zipfile import ZipFile
 from scripts.classes import Footpath, Stop, Connection, Trip
 from scripts.connectionscan_router import ConnectionScanData
 
+ENCODING = "utf-8-sig" # we use utf-8-sig since gtfs-data from switzerland are encoded in utf-8-with-bom
+
 def get_index_with_default(header, column_name, default_value=None):
     return header.index(column_name) if column_name in header else default_value
 
@@ -30,7 +32,7 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
     with ZipFile(path_to_gtfs_zip, "r") as zip:
 
         with zip.open("stops.txt", "r") as gtfs_file:
-            reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+            reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
             id_index = header.index("stop_id") # required
             code_index = get_index_with_default(header, "stop_code") # optional
@@ -48,7 +50,7 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                     )
 
         with zip.open("transfers.txt", "r") as gtfs_file:
-            reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+            reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
             from_stop_id_index = header.index("from_stop_id") # required
             to_stop_id_index = header.index("to_stop_id") # required
@@ -70,7 +72,7 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
         trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id)
 
         with zip.open("stop_times.txt", "r") as gtfs_file:
-            reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+            reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
             trip_id_index = header.index("trip_id") # required
             stop_id_index = header.index("stop_id") # required
@@ -117,7 +119,7 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
     service_available_at_date_per_service_id = {}
     with zip.open("calendar.txt", "r") as gtfs_file:
         weekday_columns = ["monday", "tuesday", "wednesday", "thursday" , "friday", "saturday", "sunday"]
-        reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+        reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
         service_id_index = header.index("service_id") # required
         weekday_index = header.index(weekday_columns[desired_date.weekday()]) # required
@@ -129,7 +131,7 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
             service_available_at_date_per_service_id[row[service_id_index]] = True if start_date <= desired_date <= end_date and row[weekday_index] == "1" else False
     
     with zip.open("calendar_dates.txt", "r") as gtfs_file:
-        reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+        reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
         service_id_index = header.index("service_id") # required
         date_index = header.index("date") # required
@@ -150,7 +152,7 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
 def get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id):
     trip_available_at_date_per_trip_id = {}
     with zip.open("trips.txt", "r") as gtfs_file:
-        reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+        reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
         trip_id_index = header.index("trip_id") # required
         service_id_index = header.index("service_id") # required
