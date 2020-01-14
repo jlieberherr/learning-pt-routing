@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
-                                 parse_gtfs, parse_yymmdd)
+                                 hhmmss_to_sec, parse_gtfs, parse_yymmdd)
 
 PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
 
@@ -12,6 +12,10 @@ def test_parse_yymmdd():
     assert date(2020, 1, 12) == parse_yymmdd("20200112")
     assert date(2018, 12, 9) == parse_yymmdd("20181209")
     assert date(2019, 12, 14) == parse_yymmdd("20191214")
+
+
+def test_hhmmss_to_sec():
+    assert 6 * 60 * 60 + 23 * 60 + 5== hhmmss_to_sec("06:23:05")
 
 
 def test_gtfs_parser():
@@ -42,6 +46,19 @@ def test_gtfs_parser():
     check_footpath("8500218:0:8", "8500218:0:7", 300)
     check_footpath("8503000:0:34", "8503000:0:14", 420)
     check_footpath("8501026:0:3", "8501026:0:1", 120)
+
+    # trips
+    def check_trip(trip_id, exp_nb_connections, exp_first_stop_id, exp_last_stop_id, exp_dep_first_stop, exp_arr_last_stop):
+        trip = cs_data.trips_per_id[trip_id]
+        assert exp_nb_connections == len(trip.connections)
+        first_con = trip.connections[0]
+        last_con = trip.connections[-1]
+        assert exp_first_stop_id == first_con.from_stop_id
+        assert exp_last_stop_id == last_con.to_stop_id
+        assert hhmmss_to_sec(exp_dep_first_stop) == first_con.dep_time
+        assert hhmmss_to_sec(exp_arr_last_stop) == last_con.arr_time
+    
+    check_trip("2.TA.1-85-j19-1.1.H", 16, "8572668", "8572648", "06:01:00", "06:23:00")
 
 
 def test_get_service_available_at_date_per_service_id_get_trip_available_at_date_per_trip_id():

@@ -3,7 +3,7 @@ from datetime import date
 from io import TextIOWrapper
 from zipfile import ZipFile
 
-from scripts.classes import Footpath, Stop
+from scripts.classes import Footpath, Stop, Connection, Trip
 from scripts.connectionscan_router import ConnectionScanData
 
 def get_index_with_default(header, column_name, default_value=None):
@@ -15,11 +15,17 @@ def parse_yymmdd(yymmdd_str):
     m = int(yymmdd_str[4:6])
     d = int(yymmdd_str[6:8])
     return date(y, m, d)
+
+
+def hhmmss_to_sec(hhmmss):
+    h, m, s = hhmmss.split(':')
+    return int(h) * 3600 + int(m) * 60 + int(s)
     
 
 def parse_gtfs(path_to_gtfs_zip, desired_date):
     stops_per_id = {}
     footpaths_per_from_to_stop_id = {}
+    trips_per_id = {}
 
     with ZipFile(path_to_gtfs_zip, "r") as zip:
 
@@ -61,8 +67,50 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                 raise ValueError("min_transfer_time column in gtfs transfers.txt file is not definied, cannot calculate footpaths.")
         
         service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip, desired_date)
+        trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id)
 
-    return ConnectionScanData(stops_per_id, footpaths_per_from_to_stop_id, {})
+        with zip.open("stop_times.txt", "r") as gtfs_file:
+            reader = csv.reader(TextIOWrapper(gtfs_file, "utf-8"))
+            header = next(reader)
+            trip_id_index = header.index("trip_id") # required
+            stop_id_index = header.index("stop_id") # required
+            arrival_time_index = get_index_with_default(header, "arrival_time") # conditionally required
+            departure_time_index = get_index_with_default(header, "departure_time") # conditionally required
+
+            def process_rows_of_trip(rows):
+                if rows:
+                    trip_id = rows[0][trip_id_index]
+                    if trip_available_at_date_per_trip_id[trip_id]:
+                        connections = []
+                        for i in range(len(rows) - 1):
+                            from_row = rows[i]
+                            to_row = rows[i + 1]
+                            con_dep = from_row[departure_time_index] if departure_time_index else None
+                            con_arr = to_row[arrival_time_index] if arrival_time_index else None
+                            if con_dep and con_arr:
+                                connections += [Connection(
+                                    trip_id, 
+                                    from_row[stop_id_index], 
+                                    to_row[stop_id_index], 
+                                    hhmmss_to_sec(con_dep), 
+                                    hhmmss_to_sec(con_arr))]
+                            else:
+                                return # we do not want trips with missing times
+                        trips_per_id[trip_id] = Trip(trip_id, connections)
+            
+            last_trip_id = None
+            row_list = []
+            for row in reader:
+                act_trip_id = row[trip_id_index]
+                if last_trip_id == act_trip_id:
+                    row_list += [row]
+                else:
+                    process_rows_of_trip(row_list)
+                    last_trip_id = act_trip_id
+                    row_list = [row]
+            process_rows_of_trip(row_list)               
+
+    return ConnectionScanData(stops_per_id, footpaths_per_from_to_stop_id, trips_per_id)
 
 
 def get_service_available_at_date_per_service_id(zip, desired_date):
