@@ -6,6 +6,7 @@ from datetime import date
 from io import TextIOWrapper
 from zipfile import ZipFile
 import logging
+import time
 
 from scripts.classes import Footpath, Stop, Connection, Trip
 from scripts.connectionscan_router import ConnectionScanData
@@ -32,12 +33,15 @@ def hhmmss_to_sec(hhmmss):
 
 def parse_gtfs(path_to_gtfs_zip, desired_date):
     log.info("start parsing gtfs-file for desired date {} ({})".format(desired_date, path_to_gtfs_zip))
+    start_time = time.time()
     stops_per_id = {}
     footpaths_per_from_to_stop_id = {}
     trips_per_id = {}
 
     with ZipFile(path_to_gtfs_zip, "r") as zip:
 
+        log.info("start parsing stops.txt")
+        start_time_stops = time.time()
         with zip.open("stops.txt", "r") as gtfs_file:
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
@@ -55,7 +59,10 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                     float(row[lon_index]) if lon_index else 0.0,
                     float(row[lat_index]) if lat_index else 0.0,
                     )
+        log.info("end parsing stops.txt, # stops: {}, time elapsed: {}".format(len(stops_per_id), time.time() - start_time_stops))
 
+        log.info("start parsing transfers.txt")
+        start_time_footpaths = time.time()
         with zip.open("transfers.txt", "r") as gtfs_file:
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
@@ -74,10 +81,21 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                             int(row[min_transfer_time_index]))
             else:
                 raise ValueError("min_transfer_time column in gtfs transfers.txt file is not definied, cannot calculate footpaths.")
-        
-        service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip, desired_date)
-        trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id)
+        log.info("end parsing transfers.txt, # footpaths: {}, time elapsed: {}".format(len(footpaths_per_from_to_stop_id), time.time() - start_time_footpaths))
 
+        log.info("start parsing calendar.txt and calendar_dates.txt")
+        start_time_calendar = time.time()
+        service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip, desired_date)
+        log.info("end parsing calendar.txt and calender_dates.txt, time elapsed: {}".format(time.time() - start_time_calendar))
+
+        log.info("start parsing trips.txt")
+        start_time_trips = time.time()
+        trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id)
+        log.info("end parsing trips.txt, time elapsed: {}".format(time.time() - start_time_trips))
+
+
+        log.info("start parsing stop_times.txt")
+        start_time_stop_times = time.time()
         with zip.open("stop_times.txt", "r") as gtfs_file:
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
@@ -117,9 +135,13 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                     process_rows_of_trip(row_list)
                     last_trip_id = act_trip_id
                     row_list = [row]
-            process_rows_of_trip(row_list)               
-
-    return ConnectionScanData(stops_per_id, footpaths_per_from_to_stop_id, trips_per_id)
+            process_rows_of_trip(row_list)
+        log.info("end parsing stop_times.txt, # trips: {}, time elapsed: {}".format(len(trips_per_id), time.time() - start_time_stop_times))
+               
+    cs_data = ConnectionScanData(stops_per_id, footpaths_per_from_to_stop_id, trips_per_id)
+    log.info(str(cs_data))
+    log.info("end parsing gtfs-file. time elapsed: {}".format(time.time() - start_time))
+    return cs_data
 
 
 def get_service_available_at_date_per_service_id(zip, desired_date):
@@ -136,7 +158,7 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
             start_date = parse_yymmdd(row[start_date_index])
             end_date = parse_yymmdd(row[end_date_index])
             service_available_at_date_per_service_id[row[service_id_index]] = True if start_date <= desired_date <= end_date and row[weekday_index] == "1" else False
-    
+
     with zip.open("calendar_dates.txt", "r") as gtfs_file:
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)

@@ -111,3 +111,4 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         assert trip_available_at_date_per_trip_id["18.TA.6-1-j19-1.17.H"]
         assert not trip_available_at_date_per_trip_id["41.TA.6-1-j19-1.37.R"]
         assert not trip_available_at_date_per_trip_id["3.TA.90-73-Y-j19-1.2.H"]
+
