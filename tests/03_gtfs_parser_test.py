@@ -2,6 +2,8 @@ from builtins import id
 from datetime import date
 from zipfile import ZipFile
 
+import pytest
+
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
                                  hhmmss_to_sec, parse_gtfs, parse_yymmdd)
@@ -59,6 +61,28 @@ def test_gtfs_parser():
         assert hhmmss_to_sec(exp_arr_last_stop) == last_con.arr_time
     
     check_trip("2.TA.1-85-j19-1.1.H", 16, "8572668", "8572648", "06:01:00", "06:23:00")
+    check_trip("1.TA.1-85-j19-1.1.H", 16, "8572668", "8572648", "05:31:00", "05:53:00")
+    
+    def check_connection_on_trip(trip_id, connection_index, exp_from_stop_id, exp_to_stop_id, exp_dep_time_hhmmss, exp_arr_time_hhmmss):
+        trip = cs_data.trips_per_id[trip_id]
+        con = trip.connections[connection_index]
+        assert exp_from_stop_id == con.from_stop_id
+        assert exp_to_stop_id == con.to_stop_id
+        assert hhmmss_to_sec(exp_dep_time_hhmmss) == con.dep_time
+        assert hhmmss_to_sec(exp_arr_time_hhmmss) == con.arr_time
+    
+    check_connection_on_trip("2.TA.1-85-j19-1.1.H", 0, "8572668", "8502095", "06:01:00", "06:04:00")
+    check_connection_on_trip("2.TA.1-85-j19-1.1.H", 1, "8502095", "8572666", "06:04:00", "06:05:00")
+    check_connection_on_trip("2.TA.1-85-j19-1.1.H", 1, "8502095", "8572666", "06:04:00", "06:05:00")
+    check_connection_on_trip("2.TA.1-85-j19-1.1.H", 15, "8572656", "8572648", "06:18:00", "06:23:00")
+
+    with pytest.raises(KeyError):
+        cs_data.trips_per_id["3.TA.90-73-Y-j19-1.2.H"]
+    
+    with pytest.raises(KeyError):
+        cs_data.trips_per_id["471.TA.26-759-j19-1.5.R"]
+
+
 
 
 def test_get_service_available_at_date_per_service_id_get_trip_available_at_date_per_trip_id():
@@ -77,8 +101,10 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         # trips.txt
         trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip, service_abailable_at_date_per_service_id)
         assert 2272 == len(trip_available_at_date_per_trip_id)
+        assert trip_available_at_date_per_trip_id["1.TA.1-85-j19-1.1.H"]
         assert trip_available_at_date_per_trip_id["2.TA.1-85-j19-1.1.H"]
         assert not trip_available_at_date_per_trip_id["471.TA.26-759-j19-1.5.R"]
         assert not trip_available_at_date_per_trip_id["6.TA.6-1-j19-1.6.R"]
         assert trip_available_at_date_per_trip_id["18.TA.6-1-j19-1.17.H"]
         assert not trip_available_at_date_per_trip_id["41.TA.6-1-j19-1.37.R"]
+        assert not trip_available_at_date_per_trip_id["3.TA.90-73-Y-j19-1.2.H"]
