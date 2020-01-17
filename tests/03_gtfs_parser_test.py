@@ -9,18 +9,11 @@ import pytest
 
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
-                                 hhmmss_to_sec, parse_gtfs, parse_yymmdd)
+                                 parse_gtfs)
+from scripts.helpers.funs import hhmmss_to_sec
+
 
 PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
-
-def test_parse_yymmdd():
-    assert date(2020, 1, 12) == parse_yymmdd("20200112")
-    assert date(2018, 12, 9) == parse_yymmdd("20181209")
-    assert date(2019, 12, 14) == parse_yymmdd("20191214")
-
-
-def test_hhmmss_to_sec():
-    assert 6 * 60 * 60 + 23 * 60 + 5== hhmmss_to_sec("06:23:05")
 
 
 def test_gtfs_parser():
@@ -111,4 +104,14 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         assert trip_available_at_date_per_trip_id["18.TA.6-1-j19-1.17.H"]
         assert not trip_available_at_date_per_trip_id["41.TA.6-1-j19-1.37.R"]
         assert not trip_available_at_date_per_trip_id["3.TA.90-73-Y-j19-1.2.H"]
+
+def run_real_gtfs_files(): # long running times. replace run by test to run this with pytest.
+    parse_gtfs(r"D:\data\90_divers\gtfs (1).zip", date(2019, 10, 16)) 
+    # time elapsed: 00:00:22.553. ConnectionsScanData: # stops: 41828, # footpaths: 78550, # trips: 58852, # connections: 1301028.
+    
+    parse_gtfs(r"D:\data\90_divers\gtfs (2).zip", date(2019, 8, 1)) 
+    # time elapsed: 00:00:01.797. ConnectionsScanData: # stops: 6456, # footpaths: 0, # trips: 2241, # connections: 94565.
+    
+    parse_gtfs(r"D:\data\90_divers\gtfs (3).zip", date(2019, 1, 18))
+    # time elapsed: 00:01:01.608. ConnectionsScanData: # stops: 31184, # footpaths: 26620, # trips: 291882, # connections: 2179238. 
 

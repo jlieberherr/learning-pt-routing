@@ -5,6 +5,7 @@ import pytest
 
 from scripts.classes import Connection, Footpath, Stop, Trip
 from scripts.connectionscan_router import ConnectionScanData
+from scripts.helpers.my_logging import log_end
 
 
 def test_connectionscan_data_constructor_basic():
@@ -43,23 +44,29 @@ def test_connectionscan_data_constructor_basic():
 def test_connectionscan_data_constructor_stop_id_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s2", "", "", 0.0, 0.0)}, {}, {})
+    log_end(additional_message="test failed successfull")
 
 def test_connectionscan_data_constructor_from_stop_id_in_footpath_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)}, {("s2", "s2"): Footpath("s1", "s1", 60)}, {})
+    log_end(additional_message="test failed successfull")
 
 def test_connectionscan_data_constructor_to_stop_id_in_footpath_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)}, {("s2", "s1"): Footpath("s2", "s2", 60)}, {})
+    log_end(additional_message="test failed successfull")
 
 def test_connectionscan_data_constructor_stops_in_footpath_and_stops_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {("s1", "s2"): Footpath("s1", "s2", 60)}, {})
+    log_end(additional_message="test failed successfull")
 
 def test_connectionscan_data_constructor_trip_id_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({}, {}, {"t1": Trip("t", [])})
+    log_end(additional_message="test failed successfull")
 
 def test_connectionscan_data_constructor_stop_ids_in_trips_not_consistent_with_stops():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {}, {"t": Trip("t", [Connection("t", "s1", "s2", 30, 40)])})
+    log_end(additional_message="test failed successfull")

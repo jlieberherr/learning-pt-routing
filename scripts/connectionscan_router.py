@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import time
 import logging
+import time
+
+from scripts.helpers.my_logging import log_start, log_end
 
 log = logging.getLogger(__name__)
 
 class ConnectionScanData:
     def __init__(self, stops_per_id, footpaths_per_from_to_stop_id, trips_per_id):
-        log.info("start creating ConnectionScanData")
-        start_time = time.time()
+        log_start("creating ConnectionScanData", log)
         # stops
         for stop_id, stop in stops_per_id.items():
             if stop_id != stop.id:
@@ -43,7 +44,7 @@ class ConnectionScanData:
 
         cons_in_trips = [t.connections for t in trips_per_id.values()]
         self.sorted_connections = sorted([c for cons in cons_in_trips for c in cons], key=lambda c: (c.dep_time, c.arr_time))
-        log.info("end creating ConnectionScanData. time elapsed: {}".format(start_time - time.time()))
+        log_end()
     
     def __str__(self):
         res = "ConnectionsScanData: "
