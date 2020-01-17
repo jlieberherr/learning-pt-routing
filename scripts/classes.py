@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 class Stop:
     def __init__(self, id, code, name, easting, northing):
         self.id = id
