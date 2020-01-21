@@ -16,6 +16,7 @@ class ConnectionScanData:
             if stop_id != stop.id:
                 raise ValueError("id in dict ({}) does not equal id in Stop {}".format(stop_id, stop))
         self.stops_per_id = stops_per_id
+        self.stops_per_name = {s.name: s for s in self.stops_per_id.values()}
 
         # footpaths
         for ((from_stop_id, to_stop_id), footpath) in footpaths_per_from_to_stop_id.items():
