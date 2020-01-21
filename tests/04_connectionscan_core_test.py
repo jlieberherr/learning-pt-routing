@@ -48,8 +48,8 @@ def create_test_connectionscan_data():
     footpaths_per_from_stop_to_stop_id = {(s.id, s.id): Footpath(s.id, s.id, 2 * 60) for s in stops_per_id.values()}
     footpaths_per_from_stop_to_stop_id[(zuerich_hb.id, zuerich_hb.id)] = Footpath(zuerich_hb.id, zuerich_hb.id, 7 * 60)
     footpaths_per_from_stop_to_stop_id[(bern.id, bern.id)] =  Footpath(bern.id, bern.id, 5 * 60)
-    footpaths_per_from_stop_to_stop_id[(bern_bahnhof.id, bern.id)] = Footpath(bern_bahnhof.id, bern.id, 6 * 60)
-    footpaths_per_from_stop_to_stop_id[(bern.id, bern_bahnhof.id)] = Footpath(bern.id, bern_bahnhof.id, 6 * 60)
+    footpaths_per_from_stop_to_stop_id[(bern_bahnhof.id, bern.id)] = Footpath(bern_bahnhof.id, bern.id, 5 * 60)
+    footpaths_per_from_stop_to_stop_id[(bern.id, bern_bahnhof.id)] = Footpath(bern.id, bern_bahnhof.id, 5 * 60)
     footpaths_per_from_stop_to_stop_id[(chur.id, chur.id)] = Footpath(chur.id, chur.id, 4 * 60)
     footpaths_per_from_stop_to_stop_id[(samedan.id, samedan_bahnhof.id)] = Footpath(samedan.id, samedan_bahnhof.id, 3 * 60)
     footpaths_per_from_stop_to_stop_id[(samedan_bahnhof.id, samedan.id)] = Footpath(samedan_bahnhof.id, samedan.id, 3 * 60)
@@ -190,18 +190,18 @@ def test_bern_zuerich_hb_earliest_arrivals():
     cs_core = ConnectionScanCore(cs_data)
     assert "08:58:00" == seconds_to_hhmmss(cs_core.route(bern.id, zuerich_hb.id, hhmmss_to_sec("07:35:00")))
     assert "08:58:00" == seconds_to_hhmmss(cs_core.route(bern.id, zuerich_hb.id, hhmmss_to_sec("08:02:00")))
-    assert None == seconds_to_hhmmss(cs_core.route(bern.id, zuerich_hb.id, hhmmss_to_sec("23:33:00")))
+    assert None == cs_core.route(bern.id, zuerich_hb.id, hhmmss_to_sec("23:33:00"))
 
 def test_bern_samedan_earliest_arrivals():
     cs_data = create_test_connectionscan_data()
     cs_core = ConnectionScanCore(cs_data)
     assert "12:45:00" == seconds_to_hhmmss(cs_core.route(bern.id, samedan.id, hhmmss_to_sec("08:30:00")))
-    assert None == seconds_to_hhmmss(cs_core.route(bern.id, samedan.id, hhmmss_to_sec("21:00:00")))
+    assert None == cs_core.route(bern.id, samedan.id, hhmmss_to_sec("21:00:00"))
 
 def test_bern_samedan_spital_earliest_arrivals():
     cs_data = create_test_connectionscan_data()
     cs_core = ConnectionScanCore(cs_data)
-    assert "15:07:00" == seconds_to_hhmmss(cs_core.route(bern.id, samedan.id, hhmmss_to_sec("07:30:00")))
+    assert "15:07:00" == seconds_to_hhmmss(cs_core.route(bern.id, samedan_spital.id, hhmmss_to_sec("07:30:00")))
 
 def test_bern_duebystrasse_samedan_earliest_arrivals():
     cs_data = create_test_connectionscan_data()
@@ -212,3 +212,18 @@ def test_basel_st_gallen_earliest_arrivals():
     cs_data = create_test_connectionscan_data()
     cs_core = ConnectionScanCore(cs_data)
     assert "09:41:00" == seconds_to_hhmmss(cs_core.route(basel_sbb.id, st_gallen.id, hhmmss_to_sec("07:30:00")))
+
+def test_bern_duebystrasse_ostermundigen_bahnhof():
+    cs_data = create_test_connectionscan_data()
+    cs_core = ConnectionScanCore(cs_data)
+    assert "12:34:00" == seconds_to_hhmmss(cs_core.route(bern_duebystrasse.id, ostermundigen_bahnhof.id, hhmmss_to_sec("12:09:46")))
+
+def test_bern_bern():
+    cs_data = create_test_connectionscan_data()
+    cs_core = ConnectionScanCore(cs_data)
+    assert "12:09:46" == seconds_to_hhmmss(cs_core.route(bern.id, bern.id, hhmmss_to_sec("12:09:46")))
+
+def test_bern_bern_bahnhof():
+    cs_data = create_test_connectionscan_data()
+    cs_core = ConnectionScanCore(cs_data)
+    assert "12:14:46" == seconds_to_hhmmss(cs_core.route(bern.id, bern_bahnhof.id, hhmmss_to_sec("12:09:46")))

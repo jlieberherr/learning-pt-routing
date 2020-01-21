@@ -3,8 +3,10 @@
 
 import logging
 import time
+from collections import defaultdict
 
-from scripts.helpers.my_logging import log_start, log_end
+from scripts.helpers.funs import seconds_to_hhmmss
+from scripts.helpers.my_logging import log_end, log_start
 
 log = logging.getLogger(__name__)
 
@@ -56,8 +58,52 @@ class ConnectionScanData:
         return res
 
 class ConnectionScanCore:
+    
     def __init__(self, connection_scan_data):
+        log_start("creating ConnectionScanData", log)
+        # static per ConnectionScanCore
+        self.MAX_ARR_TIME_VALUE = 2 * 24 * 60 * 60 # we assume that arrival times are always within two days
         self.connection_scan_data = connection_scan_data
+        self.incoming_footpaths_per_stop_id = defaultdict(list)
+        for footpath in self.connection_scan_data.footpaths_per_from_to_stop_id.values():
+            self.incoming_footpaths_per_stop_id[footpath.to_stop_id] += [footpath]
+        log_end()
+
     
     def route(self, from_stop_id, to_stop_id, desired_dep_time):
-        return None # TODO
+        # this is a slightly modified version of the connection scan algorithm, footpaths are handled differently
+        log_start("routing from {} to {} at {}".format(
+            self.connection_scan_data.stops_per_id[from_stop_id].name, 
+            self.connection_scan_data.stops_per_id[to_stop_id].name, 
+            seconds_to_hhmmss(desired_dep_time)), log)
+
+        # init dynamic data
+        earliest_arrival_per_stop_id = {}
+        trip_reached_per_trip_id = set()
+
+        # init from_stop
+        earliest_arrival_per_stop_id[from_stop_id] = desired_dep_time
+        
+        # scan connections
+        for con in self.connection_scan_data.sorted_connections:
+            if con.trip_id in trip_reached_per_trip_id:
+                if con.arr_time < earliest_arrival_per_stop_id.get(con.to_stop_id, self.MAX_ARR_TIME_VALUE):
+                    earliest_arrival_per_stop_id[con.to_stop_id] = con.arr_time
+            else:
+                for footpath in self.incoming_footpaths_per_stop_id[con.from_stop_id]:
+                    time_to_add = 0 if from_stop_id == footpath.from_stop_id else footpath.walking_time
+                    if earliest_arrival_per_stop_id.get(footpath.from_stop_id, self.MAX_ARR_TIME_VALUE) + time_to_add <= con.dep_time:
+                        if con.arr_time < earliest_arrival_per_stop_id.get(con.to_stop_id, self.MAX_ARR_TIME_VALUE):
+                            earliest_arrival_per_stop_id[con.to_stop_id] = con.arr_time
+                            trip_reached_per_trip_id.add(con.trip_id)
+        
+        # iterate over incoming footpaths of to_stop
+        for footpath in self.incoming_footpaths_per_stop_id[to_stop_id]:
+            if earliest_arrival_per_stop_id.get(footpath.from_stop_id, self.MAX_ARR_TIME_VALUE) + footpath.walking_time < earliest_arrival_per_stop_id.get(to_stop_id, self.MAX_ARR_TIME_VALUE):
+                earliest_arrival_per_stop_id[to_stop_id] = earliest_arrival_per_stop_id.get(footpath.from_stop_id, self.MAX_ARR_TIME_VALUE) + footpath.walking_time
+        
+        # return result
+        ea = earliest_arrival_per_stop_id.get(to_stop_id, self.MAX_ARR_TIME_VALUE)
+        res = None if ea == self.MAX_ARR_TIME_VALUE else ea
+        log_end("earliest arrival time: {}".format(seconds_to_hhmmss(res) if res else res))
+        return res
