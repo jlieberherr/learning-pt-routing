@@ -89,7 +89,7 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
             msg = "# trips available at {}: {}".format(desired_date, len(trip_available_at_date_per_trip_id))
         else:
             msg = "no trips available at {}. assure that the date is within the timetable period.".format(desired_date)
-        log_end(additional_message="# ")
+        log_end(additional_message=msg)
 
         log_start("parsing stop_times.txt", log)
         with zip.open("stop_times.txt", "r") as gtfs_file: # required
