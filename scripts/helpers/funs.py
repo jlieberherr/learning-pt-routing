@@ -21,3 +21,10 @@ def seconds_to_hhmmssms(seconds):
     m, s = divmod(int_seconds, 60)
     h, m = divmod(m, 60)
     return "{:02d}:{:02d}:{:02d}.{:03d}".format(h, m, s, ms)
+
+
+def seconds_to_hhmmss(seconds):
+    int_seconds = int(seconds)
+    m, s = divmod(int_seconds, 60)
+    h, m = divmod(m, 60)
+    return "{:02d}:{:02d}:{:02d}".format(h, m, s)

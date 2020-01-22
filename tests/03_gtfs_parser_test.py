@@ -7,11 +7,11 @@ from zipfile import ZipFile
 
 import pytest
 
+from scripts.connectionscan_router import ConnectionScanCore
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
                                  parse_gtfs)
 from scripts.helpers.funs import hhmmss_to_sec
-
 
 PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
 
@@ -34,7 +34,7 @@ def test_gtfs_parser():
     check_stop("8594553","", "Opfikon, Schwimmbad", 8.57155376235766, 47.4326456250948)
 
     # footpaths
-    assert 168 == len(cs_data.footpaths_per_from_to_stop_id)
+    assert (168 + 89) == len(cs_data.footpaths_per_from_to_stop_id)
     def check_footpath(from_stop_id, to_stop_id, exp_walking_time):
         a_footpath = cs_data.footpaths_per_from_to_stop_id[(from_stop_id, to_stop_id)]
         assert from_stop_id == a_footpath.from_stop_id
@@ -105,13 +105,15 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         assert not trip_available_at_date_per_trip_id["41.TA.6-1-j19-1.37.R"]
         assert not trip_available_at_date_per_trip_id["3.TA.90-73-Y-j19-1.2.H"]
 
-def run_real_gtfs_files(): # long running times. replace run by test to run this with pytest.
+def run_test_real_gtfs_files(): # long running times. replace run by test to run this with pytest.
     parse_gtfs(r"D:\data\90_divers\gtfs (1).zip", date(2019, 10, 16)) 
     # time elapsed: 00:00:22.553. ConnectionsScanData: # stops: 41828, # footpaths: 78550, # trips: 58852, # connections: 1301028.
     
     parse_gtfs(r"D:\data\90_divers\gtfs (2).zip", date(2019, 8, 1)) 
     # time elapsed: 00:00:01.797. ConnectionsScanData: # stops: 6456, # footpaths: 0, # trips: 2241, # connections: 94565.
     
-    parse_gtfs(r"D:\data\90_divers\gtfs (3).zip", date(2019, 1, 18))
+    cs_data_ch = parse_gtfs(r"D:\data\90_divers\gtfs (3).zip", date(2019, 1, 18))
     # time elapsed: 00:01:01.608. ConnectionsScanData: # stops: 31184, # footpaths: 26620, # trips: 291882, # connections: 2179238. 
 
+    cs_core_ch = ConnectionScanCore(cs_data_ch)
+    cs_core_ch.route(cs_data_ch.stops_per_name["Bern"].id, cs_data_ch.stops_per_name["Samedan"].id, hhmmss_to_sec("06:18:27"))

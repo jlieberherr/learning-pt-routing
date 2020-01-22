@@ -69,9 +69,15 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                                 int(row[min_transfer_time_index]))
                 else:
                     raise ValueError("min_transfer_time column in gtfs transfers.txt file is not definied, cannot calculate footpaths.")
-        else:
-            pass # nothing to do
-        log_end(additional_message="# footpaths: {}".format(len(footpaths_per_from_to_stop_id)))
+        log_end(additional_message="# footpaths from transfers.txt: {}".format(len(footpaths_per_from_to_stop_id)))
+        log_start("adding footpaths within stops (if not defined)", log)
+        nb_loops = 0
+        for stop_id in stops_per_id.keys():
+            from_to_stop_id = (stop_id, stop_id)
+            if from_to_stop_id not in footpaths_per_from_to_stop_id:
+                footpaths_per_from_to_stop_id[from_to_stop_id] = Footpath(stop_id, stop_id, 0) # hmmm, best guess!!
+                nb_loops += 1
+        log_end(additional_message="# footpath loops added: {}, # footpaths total: {}".format(nb_loops, len(footpaths_per_from_to_stop_id)))
 
         log_start("parsing calendar.txt and calendar_dates.txt", log)
         service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip, desired_date)

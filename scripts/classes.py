@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from scripts.helpers.funs import seconds_to_hhmmss
+
 class Stop:
     def __init__(self, id, code, name, easting, northing):
         self.id = id
@@ -42,8 +44,8 @@ class Connection:
             self.trip_id, 
             self.from_stop_id, 
             self.to_stop_id, 
-            self.dep_time, 
-            self.arr_time)
+            seconds_to_hhmmss(self.dep_time), 
+            seconds_to_hhmmss(self.arr_time))
     
     def __repr__(self):
         return str(self)
@@ -65,8 +67,8 @@ class Trip:
             self.id, 
             self.connections[0].from_stop_id if self.connections else "",
             self.connections[-1].to_stop_id if self.connections else "",
-            self.connections[0].dep_time if self.connections else "",
-            self.connections[-1].arr_time if self.connections else "",
+            seconds_to_hhmmss(self.connections[0].dep_time) if self.connections else "",
+            seconds_to_hhmmss(self.connections[-1].arr_time) if self.connections else "",
             len(self.connections))
     
     def __repr__(self):
