@@ -34,7 +34,7 @@ def test_gtfs_parser():
     check_stop("8594553","", "Opfikon, Schwimmbad", 8.57155376235766, 47.4326456250948)
 
     # footpaths
-    assert 168 == len(cs_data.footpaths_per_from_to_stop_id)
+    assert (168 + 89) == len(cs_data.footpaths_per_from_to_stop_id)
     def check_footpath(from_stop_id, to_stop_id, exp_walking_time):
         a_footpath = cs_data.footpaths_per_from_to_stop_id[(from_stop_id, to_stop_id)]
         assert from_stop_id == a_footpath.from_stop_id
