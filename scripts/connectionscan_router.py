@@ -70,7 +70,7 @@ class ConnectionScanCore:
         log_end()
 
     
-    def route(self, from_stop_id, to_stop_id, desired_dep_time):
+    def route_earliest_arrival(self, from_stop_id, to_stop_id, desired_dep_time):
         # this is a slightly modified version of the connection scan algorithm presented in figure 3 of https://arxiv.org/pdf/1703.05997.pdf
         log_start("routing from {} to {} at {}".format(
             self.connection_scan_data.stops_per_id[from_stop_id].name, 
