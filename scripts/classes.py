@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from collections import namedtuple
+
 from scripts.helpers.funs import seconds_to_hhmmss
+
 
 class Stop:
     def __init__(self, id, code, name, easting, northing):
@@ -50,6 +53,8 @@ class Connection:
     def __repr__(self):
         return str(self)
 
+JourneyLeg = namedtuple("JourneyLeg", ["in_connection", "out_connection", "footpath"])
+
 class Trip:
     def __init__(self, id, connections):
         self.id = id
@@ -82,7 +87,3 @@ class Trip:
     
     def get_set_of_all_stop_ids(self):
         return set(self.get_all_from_stop_ids()).union(set(self.get_all_to_stop_ids()))
-
-
-
-
