@@ -55,6 +55,40 @@ class Connection:
 
 JourneyLeg = namedtuple("JourneyLeg", ["in_connection", "out_connection", "footpath"])
 
+class Journey:
+    # TODO test this class
+    def __init__(self):
+        self.journey_legs = []
+    
+    def prepend_journey_leg(self, journey_leg):
+        self.journey_legs = [journey_leg] + self.journey_legs
+    
+    def get_nb_journey_legs(self):
+        return len(self.journey_legs)
+    
+    def get_nb_pt_journey_legs(self):
+        return len([leg for leg in self.journey_legs if leg.in_connection is not None])
+    
+    def get_first_stop_id(self):
+        if len(self.journey_legs) > 0:
+            first_journey_leg = self.journey_legs[0]
+            if first_journey_leg.in_connection is not None:
+                return first_journey_leg.in_connection.from_stop_id
+            else:
+                return first_journey_leg.footpath.from_stop_id
+        else:
+            return None
+    
+    def get_last_stop_id(self):
+        if len(self.journey_legs) > 0:
+            last_journey_leg = self.journey_legs[-1]
+            if last_journey_leg.footpath is None:
+                return last_journey_leg.out_connection.to_stop_id
+            else:
+                return last_journey_leg.footpath.to_stop_id
+        else:
+            return None
+
 class Trip:
     def __init__(self, id, connections):
         self.id = id

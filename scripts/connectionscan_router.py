@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from scripts.helpers.funs import seconds_to_hhmmss
 from scripts.helpers.my_logging import log_end, log_start
-from scripts.classes import JourneyLeg
+from scripts.classes import JourneyLeg, Journey
 
 log = logging.getLogger(__name__)
 
@@ -164,17 +164,17 @@ class ConnectionScanCore:
         
         # reconstruct journey
         last_journey_leg_per_stop_id[to_stop_id] = last_journey_leg_at_target
-        journey_legs = []
+        journey = Journey()
         act_stop_id = to_stop_id
         while last_journey_leg_per_stop_id.get(act_stop_id, None) is not None:
-            journey_legs = [last_journey_leg_per_stop_id[act_stop_id]] + journey_legs
+            journey.prepend_journey_leg(last_journey_leg_per_stop_id[act_stop_id])
             act_stop_id = last_journey_leg_per_stop_id[act_stop_id].in_connection.from_stop_id
         
         if from_stop_id == act_stop_id:
-            res = journey_legs
+            res = journey
         elif (from_stop_id, act_stop_id) in self.connection_scan_data:
-            journey_legs = [JourneyLeg(None, None, self.connection_scan_data[(from_stop_id, act_stop_id)])] + journey_legs
-            res = journey_legs
+            journey.prepend_journey_leg(JourneyLeg(None, None, self.connection_scan_data[(from_stop_id, act_stop_id)]))
+            res = journey
         else:
             res = None
         log_end("journey: {}".format(res))
