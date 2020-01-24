@@ -29,6 +29,9 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
 
     with ZipFile(path_to_gtfs_zip, "r") as zip:
 
+        # TODO connect ordinary stops with parent stops
+        # TODO add Footpath if distance is small (not every transfer is definied in gtfs)
+
         log_start("parsing stops.txt", log)
         with zip.open("stops.txt", "r") as gtfs_file: # required
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
