@@ -7,6 +7,7 @@ from scripts.helpers.funs import seconds_to_hhmmss
 
 
 class Stop:
+    __slots__ = ["id", "code", "name", "easting", "northing"]
     def __init__(self, id, code, name, easting, northing):
         self.id = id
         self.code = code
@@ -21,6 +22,7 @@ class Stop:
         return str(self)
 
 class Footpath:
+    __slots__ = ["from_stop_id", "to_stop_id", "walking_time"]
     def __init__(self, from_stop_id, to_stop_id, walking_time):
         self.from_stop_id = from_stop_id
         self.to_stop_id = to_stop_id
@@ -33,6 +35,7 @@ class Footpath:
         return str(self)
 
 class Connection:
+    __slots__ = ["trip_id", "from_stop_id", "to_stop_id", "dep_time", "arr_time"]
     def __init__(self, trip_id, from_stop_id, to_stop_id, dep_time, arr_time):
         if dep_time > arr_time:
             raise ValueError("dep_time ({}) <= arr_time {} does not hold".format(dep_time, arr_time))
@@ -53,9 +56,42 @@ class Connection:
     def __repr__(self):
         return str(self)
 
-JourneyLeg = namedtuple("JourneyLeg", ["in_connection", "out_connection", "footpath"])
+class JourneyLeg:
+    __slots__ = ["in_connection", "out_connection", "footpath"]
+    def __init__(self, in_connection, out_connection, footpath):
+        self.in_connection = in_connection
+        self.out_connection = out_connection
+        self.footpath = footpath
+    
+    def get_trip_id(self):
+        return self.in_connection.trip_id
+    
+    def get_in_stop_id(self):
+        return self.in_connction.from_stop_id
+    
+    def get_out_stop_id(self):
+        return self.out_connction.to_stop_id
+    
+    def get_dep_time_in_stop_id(self):
+        return self.in_connction.dep_time
+    
+    def get_arr_time_out_stop_id(self):
+        return self.out_connection.arr_time
+    
+    def __str__(self):
+        return "[trip_id={}, in_stop_id={}, out_stop_id={}, dep_time={}, arr_time={}]".format(
+            self.get_trip_id(), 
+            self.get_in_stop_id(),
+            self.get_out_stop_id(),
+            seconds_to_hhmmss(self.get_dep_time_in_stop_id()),
+            seconds_to_hhmmss(self.get_arr_time_out_stop_id())
+            )
+    
+    def __repr__(self):
+        return str(self)
 
 class Journey:
+    __slots__ = ["journey_legs"]
     # TODO test this class
     def __init__(self):
         self.journey_legs = []
@@ -69,27 +105,43 @@ class Journey:
     def get_nb_pt_journey_legs(self):
         return len([leg for leg in self.journey_legs if leg.in_connection is not None])
     
+    def has_legs(self):
+        return len(self.journey_legs) > 0
+
+    def is_first_leg_footpath(self):
+        if self.has_legs():
+            return True if self.journey_legs[0].in_connection is None else False
+        else:
+            return False
+    
+    def is_last_leg_footpath(self):
+        if self.has_legs():
+            return True if self.journey_legs[-1].footpath is not None else False
+        else:
+            return False
+    
     def get_first_stop_id(self):
-        if len(self.journey_legs) > 0:
+        if self.has_legs():
             first_journey_leg = self.journey_legs[0]
-            if first_journey_leg.in_connection is not None:
-                return first_journey_leg.in_connection.from_stop_id
-            else:
+            if self.is_first_leg_footpath():
                 return first_journey_leg.footpath.from_stop_id
+            else:
+                return first_journey_leg.in_connection.from_stop_id
         else:
             return None
     
     def get_last_stop_id(self):
-        if len(self.journey_legs) > 0:
+        if self.has_legs() > 0:
             last_journey_leg = self.journey_legs[-1]
-            if last_journey_leg.footpath is None:
-                return last_journey_leg.out_connection.to_stop_id
-            else:
+            if self.is_last_leg_footpath():
                 return last_journey_leg.footpath.to_stop_id
+            else:
+                return last_journey_leg.out_connection.to_stop_id
         else:
             return None
 
 class Trip:
+    __slots__ = ["id", "connections"]
     def __init__(self, id, connections):
         self.id = id
         for i in range(len(connections) - 1):
