@@ -188,6 +188,39 @@ class Journey:
                 return last_journey_leg.out_connection.to_stop_id
         else:
             return None
+    
+    def get_dep_time(self):
+        if not self.has_legs():
+            return None
+        first_journey_leg = self.journey_legs[0]
+        if first_journey_leg.in_connection is not None:
+            return first_journey_leg.in_connection.dep_time
+        else:
+            if len(self.journey_legs) == 1:
+                return None
+            else:
+                return self.journey_legs[1].in_connection.dep_time - first_journey_leg.footpath.walking_time
+    
+    def get_arr_time(self):
+        if not self.has_legs():
+            return None
+        last_journey_leg = self.journey_legs[-1]
+        if last_journey_leg.out_connection is not None:
+            return last_journey_leg.out_connection.arr_time + (0 if last_journey_leg.footpath is None else last_journey_leg.footpath.walking_time)
+        else:
+            return None
+    
+    def get_pt_in_stop_ids(self):
+        return [journey_leg.in_connection.from_stop_id for journey_leg in self.journey_legs if journey_leg.in_connection is not None]
+        
+    def get_pt_out_stop_ids(self):
+        return [journey_leg.out_connection.to_stop_id for journey_leg in self.journey_legs if journey_leg.out_connection is not None]
+    
+    def __str__(self):
+        return "[journey_legs={}]".format(self.journey_legs)
+    
+    def __repr__(self):
+        return str(self)
 
 class Trip:
     __slots__ = ["id", "connections"]

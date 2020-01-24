@@ -24,6 +24,8 @@ def seconds_to_hhmmssms(seconds):
 
 
 def seconds_to_hhmmss(seconds):
+    if seconds is None:
+        return None
     int_seconds = int(seconds)
     m, s = divmod(int_seconds, 60)
     h, m = divmod(m, 60)

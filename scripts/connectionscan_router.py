@@ -126,7 +126,7 @@ class ConnectionScanCore:
             seconds_to_hhmmss(desired_dep_time)), log)
 
         if from_stop_id == to_stop_id:
-            return [JourneyLeg(None, None, None)]
+            return Journey()
 
         # init dynamic data
         earliest_arrival_including_transfer_time_per_stop_id = {}
@@ -172,8 +172,8 @@ class ConnectionScanCore:
         
         if from_stop_id == act_stop_id:
             res = journey
-        elif (from_stop_id, act_stop_id) in self.connection_scan_data:
-            journey.prepend_journey_leg(JourneyLeg(None, None, self.connection_scan_data[(from_stop_id, act_stop_id)]))
+        elif (from_stop_id, act_stop_id) in self.connection_scan_data.footpaths_per_from_to_stop_id:
+            journey.prepend_journey_leg(JourneyLeg(None, None, self.connection_scan_data.footpaths_per_from_to_stop_id[(from_stop_id, act_stop_id)]))
             res = journey
         else:
             res = None
