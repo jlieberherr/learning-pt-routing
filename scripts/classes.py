@@ -59,6 +59,8 @@ class Connection:
 class JourneyLeg:
     __slots__ = ["in_connection", "out_connection", "footpath"]
     def __init__(self, in_connection, out_connection, footpath):
+        if in_connection is None and out_connection is None and footpath is None:
+            raise ValueError("either in_connection and out_connection or footpath or all three must be not None")
         if (in_connection is None and out_connection is not None) or (in_connection is not None and out_connection is None):
             raise ValueError("in_connection {} and out_connection {} must both either be None or not None".format(in_connection, out_connection))
         if in_connection is not None and out_connection is not None:
@@ -79,6 +81,18 @@ class JourneyLeg:
             return self.in_connection.trip_id
         else:
             return None
+    
+    def get_first_stop_id(self):
+        if self.in_connection is not None:
+            return self.in_connection.from_stop_id
+        else:
+            return self.footpath.from_stop_id
+    
+    def get_last_stop_id(self):
+        if self.footpath is not None:
+            return self.footpath.to_stop_id
+        else:
+            return self.out_connection.to_stop_id
     
     def get_in_stop_id(self):
         if self.in_connection is not None:
@@ -118,12 +132,21 @@ class JourneyLeg:
 
 class Journey:
     __slots__ = ["journey_legs"]
-    # TODO test this class
     def __init__(self):
         self.journey_legs = []
     
     def prepend_journey_leg(self, journey_leg):
-        self.journey_legs = [journey_leg] + self.journey_legs
+        if self.has_legs():
+            first_journey_leg_so_far = self.journey_legs[0]
+            if journey_leg.in_connection is None and first_journey_leg_so_far.in_connection is None:
+                raise ValueError("two subsequent journey legs without connections are not allowed")
+            else:
+                if journey_leg.get_last_stop_id() != self.get_first_stop_id():
+                    raise ValueError("last_stop_id {} of new journey leg does not equal first_stop_id {} of actual journey".format(journey_leg.get_last_stop_id(), self.get_first_stop_id()))
+                else:
+                    self.journey_legs = [journey_leg] + self.journey_legs
+        else:
+            self.journey_legs = [journey_leg]
     
     def get_nb_journey_legs(self):
         return len(self.journey_legs)

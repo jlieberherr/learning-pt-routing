@@ -101,6 +101,8 @@ def test_journey_leg():
     assert "t1" == journey_leg.get_trip_id()
     assert "s1" == journey_leg.get_in_stop_id()
     assert "s6" == journey_leg.get_out_stop_id()
+    assert "s1" == journey_leg.get_first_stop_id()
+    assert "s7" == journey_leg.get_last_stop_id()
     assert 10 == journey_leg.get_dep_time_in_stop_id()
     assert 40 == journey_leg.get_arr_time_out_stop_id()
 
@@ -163,4 +165,46 @@ def test_jounrney_leg_constructor_not_in_out_connection_consistent_2():
     footpath = Footpath("s10", "s7", 1)
     with pytest.raises(ValueError):
         JourneyLeg(in_connection, out_connection, footpath)
+
+def test_journey_leg_1():
+    journey = Journey()
+    journey.prepend_journey_leg(JourneyLeg(Connection("t2", "s7", "s8", 50, 60), Connection("t2", "s12", "s13", 80, 90),  None))
+    journey.prepend_journey_leg(JourneyLeg(Connection("t1", "s1", "s2", 10, 20), Connection("t1", "s5", "s6", 30, 40),  Footpath("s6", "s7", 1)))
+    journey.prepend_journey_leg(JourneyLeg(None, None, Footpath("s0", "s1", 2)))
+    assert journey.has_legs()
+    assert journey.is_first_leg_footpath()
+    assert not journey.is_last_leg_footpath()
+    assert "s0" == journey.get_first_stop_id()
+    assert "s13" == journey.get_last_stop_id()
+    assert 3 == journey.get_nb_journey_legs()
+    assert 2 == journey.get_nb_pt_journey_legs()
+
+def test_journey_leg_2():
+    journey = Journey()
+    journey.prepend_journey_leg(JourneyLeg(Connection("t2", "s6", "s8", 50, 60), Connection("t2", "s12", "s13", 80, 90),  Footpath("s13", "s14", 1)))
+    journey.prepend_journey_leg(JourneyLeg(Connection("t1", "s1", "s2", 10, 20), Connection("t1", "s5", "s6", 30, 40),  None))
+    assert journey.has_legs()
+    assert not journey.is_first_leg_footpath()
+    assert journey.is_last_leg_footpath()
+    assert "s1" == journey.get_first_stop_id()
+    assert "s14" == journey.get_last_stop_id()
+    assert 2 == journey.get_nb_journey_legs()
+    assert 2 == journey.get_nb_pt_journey_legs()
+
+
+def test_journey_prepend_journey_leg_not_stop_consistent_1():
+    journey = Journey()
+    journey.prepend_journey_leg(JourneyLeg(Connection("t2", "s6", "s8", 50, 60), Connection("t2", "s12", "s13", 80, 90),  None))
+    with pytest.raises(ValueError):
+        journey.prepend_journey_leg(JourneyLeg(Connection("t1", "s1", "s2", 10, 20), Connection("t1", "s5", "s6", 30, 40),  Footpath("s6", "s7", 1)))
+
+def test_journey_prepend_journey_leg_not_stop_consistent_2():
+    journey = Journey()
+    journey.prepend_journey_leg(JourneyLeg(Connection("t2", "s6", "s8", 50, 60), Connection("t2", "s12", "s13", 80, 90),  None))
+    with pytest.raises(ValueError):
+        journey.prepend_journey_leg(JourneyLeg(Connection("t1", "s1", "s2", 10, 20), Connection("t1", "s5", "s7", 30, 40),  None))
+    
+
+    
+
 
