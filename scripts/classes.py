@@ -59,6 +59,14 @@ class Connection:
 class JourneyLeg:
     __slots__ = ["in_connection", "out_connection", "footpath"]
     def __init__(self, in_connection, out_connection, footpath):
+        if in_connection.trip_id != out_connection.trip_id:
+            raise ValueError("trip_id {} of in_connection is not equal to trip_id {} of out_connection.".format(in_connection.trip_id, out_connection.trip_id))
+        if in_connection != out_connection:
+            if in_connection.arr_time > out_connection.dep_time:
+                raise ValueError("arr_time {} of in_connection is after dep_time {} of out_connection.".format(seconds_to_hhmmss(in_connection.arr_time), seconds_to_hhmmss(out_connection.dep_time)))
+        if footpath is not None:
+            if out_connection.to_stop_id != footpath.from_stop_id:
+                raise ValueError("to_stop_id {} of out_connection is not equal to from_stop_id {} of footpath".format(out_connection.to_stop_id, footpath.from_stop_id))
         self.in_connection = in_connection
         self.out_connection = out_connection
         self.footpath = footpath
@@ -67,13 +75,13 @@ class JourneyLeg:
         return self.in_connection.trip_id
     
     def get_in_stop_id(self):
-        return self.in_connction.from_stop_id
+        return self.in_connection.from_stop_id
     
     def get_out_stop_id(self):
-        return self.out_connction.to_stop_id
+        return self.out_connection.to_stop_id
     
     def get_dep_time_in_stop_id(self):
-        return self.in_connction.dep_time
+        return self.in_connection.dep_time
     
     def get_arr_time_out_stop_id(self):
         return self.out_connection.arr_time

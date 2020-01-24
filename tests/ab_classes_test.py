@@ -3,7 +3,7 @@
 
 import pytest
 
-from scripts.classes import Connection, Footpath, Stop, Trip
+from scripts.classes import Connection, Footpath, Stop, Trip, JourneyLeg, Journey
 
 
 def test_stop_constructor():
@@ -81,7 +81,7 @@ def test_trip_get_all_to_stop_ids():
     a_trip = Trip(trip_id, connections)
     assert ["s2", "s3"] == a_trip.get_all_to_stop_ids()
 
-def test_trip_get_set_of_all_stop_idss():
+def test_trip_get_set_of_all_stop_ids():
     trip_id = "t1"
     connections = [
         Connection(trip_id, "s1", "s2", 60, 70),
@@ -89,3 +89,17 @@ def test_trip_get_set_of_all_stop_idss():
     ]
     a_trip = Trip(trip_id, connections)
     assert {"s1", "s2", "s3"} == a_trip.get_set_of_all_stop_ids()
+
+def test_journey_leg():
+    in_connection = Connection("t1", "s1", "s2", 10, 20)
+    out_connection = Connection("t1", "s5", "s6", 30, 40)
+    footpath = Footpath("s6", "s7", 1)
+    journey_leg = JourneyLeg(in_connection, out_connection, footpath)
+    assert in_connection == journey_leg.in_connection
+    assert out_connection == journey_leg.out_connection
+    assert footpath == journey_leg.footpath
+    assert "t1" == journey_leg.get_trip_id()
+    assert "s1" == journey_leg.get_in_stop_id()
+    assert "s6" == journey_leg.get_out_stop_id()
+    assert 10 == journey_leg.get_dep_time_in_stop_id()
+    assert 40 == journey_leg.get_arr_time_out_stop_id()
