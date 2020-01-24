@@ -103,3 +103,64 @@ def test_journey_leg():
     assert "s6" == journey_leg.get_out_stop_id()
     assert 10 == journey_leg.get_dep_time_in_stop_id()
     assert 40 == journey_leg.get_arr_time_out_stop_id()
+
+def test_journey_leg_without_footpath():
+    in_connection = Connection("t1", "s1", "s2", 10, 20)
+    out_connection = Connection("t1", "s5", "s6", 30, 40)
+    journey_leg = JourneyLeg(in_connection, out_connection, None)
+    assert in_connection == journey_leg.in_connection
+    assert out_connection == journey_leg.out_connection
+    assert None == journey_leg.footpath
+    assert "t1" == journey_leg.get_trip_id()
+    assert "s1" == journey_leg.get_in_stop_id()
+    assert "s6" == journey_leg.get_out_stop_id()
+    assert 10 == journey_leg.get_dep_time_in_stop_id()
+    assert 40 == journey_leg.get_arr_time_out_stop_id()
+
+def test_journey_leg_without_in_out_connection():
+    footpath = Footpath("s6", "s7", 1)
+    journey_leg = JourneyLeg(None, None, footpath)
+    assert None == journey_leg.in_connection
+    assert None == journey_leg.out_connection
+    assert footpath == journey_leg.footpath
+    assert None == journey_leg.get_trip_id()
+    assert None == journey_leg.get_in_stop_id()
+    assert None == journey_leg.get_out_stop_id()
+    assert None == journey_leg.get_dep_time_in_stop_id()
+    assert None == journey_leg.get_arr_time_out_stop_id()
+
+def test_jounrney_leg_constructor_not_trip_consistent():
+    in_connection = Connection("t1", "s1", "s2", 10, 20)
+    out_connection = Connection("t2", "s5", "s6", 30, 40)
+    footpath = Footpath("s6", "s7", 1)
+    with pytest.raises(ValueError):
+        JourneyLeg(in_connection, out_connection, footpath)
+
+def test_jounrney_leg_constructor_not_time_consistent():
+    in_connection = Connection("t1", "s1", "s2", 10, 20)
+    out_connection = Connection("t1", "s5", "s6", 5, 9)
+    footpath = Footpath("s6", "s7", 1)
+    with pytest.raises(ValueError):
+        JourneyLeg(in_connection, out_connection, footpath)
+
+def test_jounrney_leg_constructor_not_stop_consistent():
+    in_connection = Connection("t1", "s1", "s2", 10, 20)
+    out_connection = Connection("t1", "s5", "s6", 30, 40)
+    footpath = Footpath("s10", "s7", 1)
+    with pytest.raises(ValueError):
+        JourneyLeg(in_connection, out_connection, footpath)
+
+def test_jounrney_leg_constructor_not_in_out_connection_consistent_1():
+    in_connection = Connection("t1", "s1", "s2", 10, 20)
+    out_connection = None
+    footpath = Footpath("s10", "s7", 1)
+    with pytest.raises(ValueError):
+        JourneyLeg(in_connection, out_connection, footpath)
+
+def test_jounrney_leg_constructor_not_in_out_connection_consistent_2():
+    in_connection = None
+    out_connection = Connection("t1", "s5", "s6", 30, 40)
+    footpath = Footpath("s10", "s7", 1)
+    with pytest.raises(ValueError):
+        JourneyLeg(in_connection, out_connection, footpath)
+

@@ -59,12 +59,15 @@ class Connection:
 class JourneyLeg:
     __slots__ = ["in_connection", "out_connection", "footpath"]
     def __init__(self, in_connection, out_connection, footpath):
-        if in_connection.trip_id != out_connection.trip_id:
-            raise ValueError("trip_id {} of in_connection is not equal to trip_id {} of out_connection.".format(in_connection.trip_id, out_connection.trip_id))
-        if in_connection != out_connection:
-            if in_connection.arr_time > out_connection.dep_time:
-                raise ValueError("arr_time {} of in_connection is after dep_time {} of out_connection.".format(seconds_to_hhmmss(in_connection.arr_time), seconds_to_hhmmss(out_connection.dep_time)))
-        if footpath is not None:
+        if (in_connection is None and out_connection is not None) or (in_connection is not None and out_connection is None):
+            raise ValueError("in_connection {} and out_connection {} must both either be None or not None".format(in_connection, out_connection))
+        if in_connection is not None and out_connection is not None:
+            if in_connection.trip_id != out_connection.trip_id:
+                raise ValueError("trip_id {} of in_connection is not equal to trip_id {} of out_connection.".format(in_connection.trip_id, out_connection.trip_id))
+            if in_connection != out_connection:
+                if in_connection.dep_time > out_connection.arr_time:
+                    raise ValueError("dep_time {} of in_connection is after arr_time {} of out_connection.".format(seconds_to_hhmmss(in_connection.dep_time), seconds_to_hhmmss(out_connection.arr_time)))
+        if footpath is not None and out_connection is not None:
             if out_connection.to_stop_id != footpath.from_stop_id:
                 raise ValueError("to_stop_id {} of out_connection is not equal to from_stop_id {} of footpath".format(out_connection.to_stop_id, footpath.from_stop_id))
         self.in_connection = in_connection
@@ -72,19 +75,34 @@ class JourneyLeg:
         self.footpath = footpath
     
     def get_trip_id(self):
-        return self.in_connection.trip_id
+        if self.in_connection:
+            return self.in_connection.trip_id
+        else:
+            return None
     
     def get_in_stop_id(self):
-        return self.in_connection.from_stop_id
+        if self.in_connection is not None:
+            return self.in_connection.from_stop_id
+        else:
+            return None
     
     def get_out_stop_id(self):
-        return self.out_connection.to_stop_id
+        if self.out_connection is not None:
+            return self.out_connection.to_stop_id
+        else:
+            return None
     
     def get_dep_time_in_stop_id(self):
-        return self.in_connection.dep_time
+        if self.in_connection is not None:
+            return self.in_connection.dep_time
+        else:
+            return None
     
     def get_arr_time_out_stop_id(self):
-        return self.out_connection.arr_time
+        if self.out_connection is not None:
+            return self.out_connection.arr_time
+        else:
+            return None
     
     def __str__(self):
         return "[trip_id={}, in_stop_id={}, out_stop_id={}, dep_time={}, arr_time={}]".format(
