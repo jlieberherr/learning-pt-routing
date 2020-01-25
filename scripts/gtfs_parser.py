@@ -41,14 +41,20 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
             name_index = get_index_with_default(header, "stop_name") # conditionally required
             lat_index = get_index_with_default(header, "stop_lat") # conditionally required
             lon_index = get_index_with_default(header, "stop_lon") # conditionally required
+            location_type_index = get_index_with_default(header, "location_type")
+            parent_station_index = get_index_with_default(header, "parent_station")
             for row in reader:
                 stop_id = row[id_index]
+                is_station = row[location_type_index] == "1" if location_type_index else False
+                parent_station_id = (row[parent_station_index] if row[parent_station_index] != "" else None) if parent_station_index else None
                 stops_per_id[stop_id] = Stop(
                     stop_id, 
                     row[code_index] if code_index else "", 
                     row[name_index] if name_index else "", 
                     float(row[lon_index]) if lon_index else 0.0,
                     float(row[lat_index]) if lat_index else 0.0,
+                    is_station = is_station,
+                    parent_station_id = parent_station_id
                     )
         log_end(additional_message="# stops: {}".format(len(stops_per_id)))
 
@@ -73,6 +79,18 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                 else:
                     raise ValueError("min_transfer_time column in gtfs transfers.txt file is not definied, cannot calculate footpaths.")
         log_end(additional_message="# footpaths from transfers.txt: {}".format(len(footpaths_per_from_to_stop_id)))
+        log_start("adding footpaths to parent station", log)
+        nb_parent_footpaths = 0
+        for a_stop in stops_per_id.values():
+            if a_stop.parent_station_id is not None:
+                key = (a_stop.id, a_stop.parent_station_id)
+                if key not in footpaths_per_from_to_stop_id:
+                    footpaths_per_from_to_stop_id[key] = Footpath(key[0], key[1], 0)
+                    nb_parent_footpaths += 1
+                if (key[1], key[0]) not in footpaths_per_from_to_stop_id:
+                    footpaths_per_from_to_stop_id[(key[1], key[0])] = Footpath(key[1], key[0], 0)
+                    nb_parent_footpaths += 1
+        log_end(additional_message="# footpath from/to parent_station added: {}. # footpaths total: {}".format(nb_parent_footpaths, len(footpaths_per_from_to_stop_id)))
         log_start("adding footpaths within stops (if not defined)", log)
         nb_loops = 0
         for stop_id in stops_per_id.keys():
@@ -144,6 +162,7 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
 
 def get_service_available_at_date_per_service_id(zip, desired_date):
     service_available_at_date_per_service_id = {}
+    # TODO handle that calendar.txt and calendar_dates.txt are only conditionally required
     with zip.open("calendar.txt", "r") as gtfs_file: # conditionally required, but we assume that the file exists
         weekday_columns = ["monday", "tuesday", "wednesday", "thursday" , "friday", "saturday", "sunday"]
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))

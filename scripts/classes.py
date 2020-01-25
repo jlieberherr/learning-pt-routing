@@ -7,14 +7,16 @@ from scripts.helpers.funs import seconds_to_hhmmss
 
 
 class Stop:
-    __slots__ = ["id", "code", "name", "easting", "northing"]
-    def __init__(self, id, code, name, easting, northing):
+    __slots__ = ["id", "code", "name", "easting", "northing", "is_station", "parent_station_id"]
+    def __init__(self, id, code, name, easting, northing, is_station=False, parent_station_id=None):
         self.id = id
         self.code = code
         self.name = name
         self.easting = easting
         self.northing = northing
-
+        self.is_station = is_station
+        self.parent_station_id = parent_station_id
+    
     def __str__(self):
         return "[id={}, code={}, name={}]".format(self.id, self.code, self.name)
     

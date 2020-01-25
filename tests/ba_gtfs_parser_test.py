@@ -20,21 +20,24 @@ def test_gtfs_parser():
     cs_data = parse_gtfs(PATH_GTFS_TEST_SAMPLE, date(2019, 1, 18))
 
     # stops
-    assert 89 == len(cs_data.stops_per_id)
-    def check_stop(stop_id, exp_code, exp_name, exp_easting, exp_northing):
+    assert 89 + 11 == len(cs_data.stops_per_id)
+    def check_stop(stop_id, exp_code, exp_name, exp_easting, exp_northing, exp_is_station, exp_parent_station_id):
         a_stop = cs_data.stops_per_id[stop_id]
         assert stop_id == a_stop.id
         assert exp_code == a_stop.code
         assert exp_name == a_stop.name
         assert exp_easting == a_stop.easting
         assert exp_northing == a_stop.northing
+        assert exp_is_station == a_stop.is_station
+        assert exp_parent_station_id == a_stop.parent_station_id
     
-    check_stop("8500218:0:7","", "Olten", 7.90768978414808, 47.3522319182299)
-    check_stop("8587654", "", "Glattbrugg, Glatthof", 8.56762812456551, 47.434511142518)
-    check_stop("8594553","", "Opfikon, Schwimmbad", 8.57155376235766, 47.4326456250948)
+    check_stop("8500218:0:7","", "Olten", 7.90768978414808, 47.3522319182299, False, "8500218P")
+    check_stop("8587654", "", "Glattbrugg, Glatthof", 8.56762812456551, 47.434511142518, False, None)
+    check_stop("8594553","", "Opfikon, Schwimmbad", 8.57155376235766, 47.4326456250948, False, None)
+    check_stop("8501008P", "", "Genève", 6.14245533484329, 46.2102053471586, True, None)
 
     # footpaths
-    assert (168 + 89) == len(cs_data.footpaths_per_from_to_stop_id)
+    assert (168 + (2 * 35) + (89 + 11)) == len(cs_data.footpaths_per_from_to_stop_id)
     def check_footpath(from_stop_id, to_stop_id, exp_walking_time):
         a_footpath = cs_data.footpaths_per_from_to_stop_id[(from_stop_id, to_stop_id)]
         assert from_stop_id == a_footpath.from_stop_id
@@ -44,6 +47,10 @@ def test_gtfs_parser():
     check_footpath("8500218:0:8", "8500218:0:7", 300)
     check_footpath("8503000:0:34", "8503000:0:14", 420)
     check_footpath("8501026:0:3", "8501026:0:1", 120)
+    check_footpath("8500218:0:7", "8500218P", 0)
+    check_footpath("8500218P", "8500218:0:7", 0)
+    check_footpath("8500218P", "8500218P", 0)
+    check_footpath("8503000:0:34", "8503000:0:34", 0)
 
     # trips
     def check_trip(trip_id, exp_nb_connections, exp_first_stop_id, exp_last_stop_id, exp_dep_first_stop, exp_arr_last_stop):
