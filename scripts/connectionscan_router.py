@@ -19,8 +19,13 @@ class ConnectionScanData:
             if stop_id != stop.id:
                 raise ValueError("id in dict ({}) does not equal id in Stop {}".format(stop_id, stop))
         self.stops_per_id = stops_per_id
-        self.stops_per_name = {s.name: s for s in self.stops_per_id.values()}
-        # TODO in general stop-names are not unique. if this is the case, the assigned stop should be something like a parent stop
+        stop_list_per_name = defaultdict(list)
+        for a_stop in self.stops_per_id.values():
+            stop_list_per_name[a_stop.name] += [a_stop]
+        def choose_best_stop(stops_with_same_name):
+            stops_with_same_name_sorted = sorted(stops_with_same_name, key=lambda s: (0 if s.is_station else 1, len(s.id)))
+            return stops_with_same_name_sorted[0]
+        self.stops_per_name = {name: choose_best_stop(stop_list) for (name, stop_list) in stop_list_per_name.items()}
 
         # footpaths
         for ((from_stop_id, to_stop_id), footpath) in footpaths_per_from_to_stop_id.items():

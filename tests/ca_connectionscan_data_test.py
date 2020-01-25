@@ -2,10 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+from datetime import date
 
 from scripts.classes import Connection, Footpath, Stop, Trip
 from scripts.connectionscan_router import ConnectionScanData
 from scripts.helpers.my_logging import log_end
+
+from scripts.gtfs_parser import parse_gtfs
+from tests.ba_gtfs_parser_test import PATH_GTFS_TEST_SAMPLE
 
 
 def test_connectionscan_data_constructor_basic():
@@ -70,3 +74,8 @@ def test_connectionscan_data_constructor_stop_ids_in_trips_not_consistent_with_s
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {}, {"t": Trip("t", [Connection("t", "s1", "s2", 30, 40)])})
     log_end(additional_message="test failed successfull")
+
+def test_connectionscan_data_constructor_stops_per_name():
+    cs_data = parse_gtfs(PATH_GTFS_TEST_SAMPLE, date(2019, 1, 18))
+    assert "8507000P" == cs_data.stops_per_name["Bern"].id
+    assert "8502886" == cs_data.stops_per_name["Kirchleerau-Moosleerau, Post"].id
