@@ -24,7 +24,7 @@ def get_index_with_default(header, column_name, default_value=None):
     return header.index(column_name) if column_name in header else default_value
  
 
-def parse_gtfs(path_to_gtfs_zip, desired_date):
+def parse_gtfs(path_to_gtfs_zip, desired_date, beeline_distance = 100.0, walking_speed = 2.0 / 3.6): # beeline_distance in meters, walking_speed in meters per second)
     log_start("parsing gtfs-file for desired date {} ({})".format(desired_date, path_to_gtfs_zip), log)
     stops_per_id = {}
     footpaths_per_from_to_stop_id = {}
@@ -106,8 +106,6 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
         # in a lot of gtfs-files the transfers.txt data is not complete at all.
         # this is why we complete the footpaths by connection all stops close enough to each other.
         # TODO test this
-        beeline_distance = 100.0 # meters
-        walking_speed = 2.0 / 3.6 # meters per second
         nb_footspaths_perimeter = 0
         log_start("adding footpaths in beeline perimeter with radius {}m".format(beeline_distance), log)
         transformer = Transformer.from_proj(4326, 4088) # epsg:4326 is WGS84, epsg:4088 is world equidistant cylindrical (sphere)

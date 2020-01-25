@@ -17,7 +17,7 @@ PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
 
 
 def test_gtfs_parser():
-    cs_data = parse_gtfs(PATH_GTFS_TEST_SAMPLE, date(2019, 1, 18))
+    cs_data = parse_gtfs(PATH_GTFS_TEST_SAMPLE, date(2019, 1, 18), beeline_distance=200)
 
     # stops
     assert 89 + 11 == len(cs_data.stops_per_id)
@@ -37,7 +37,7 @@ def test_gtfs_parser():
     check_stop("8501008P", "", "Genève", 6.14245533484329, 46.2102053471586, True, None)
 
     # footpaths
-    assert (168 + (2 * 35) + (89 + 11)) == len(cs_data.footpaths_per_from_to_stop_id)
+    assert (168 + (2 * 35) + (89 + 11) + 10) == len(cs_data.footpaths_per_from_to_stop_id)
     def check_footpath(from_stop_id, to_stop_id, exp_walking_time):
         a_footpath = cs_data.footpaths_per_from_to_stop_id[(from_stop_id, to_stop_id)]
         assert from_stop_id == a_footpath.from_stop_id
