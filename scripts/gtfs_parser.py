@@ -31,10 +31,6 @@ def parse_gtfs(path_to_gtfs_zip, desired_date, beeline_distance = 100.0, walking
     trips_per_id = {}
 
     with ZipFile(path_to_gtfs_zip, "r") as zip_file:
-
-        # TODO connect ordinary stops with parent stops
-        # TODO add Footpath if distance is small (not every transfer is definied in gtfs)
-
         log_start("parsing stops.txt", log)
         with zip_file.open("stops.txt", "r") as gtfs_file: # required
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
