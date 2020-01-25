@@ -6,6 +6,9 @@ import logging
 import time
 from io import TextIOWrapper
 from zipfile import ZipFile
+from pyproj import Transformer
+from scipy import spatial
+import math
 
 from scripts.helpers.my_logging import log_end, log_start
 from scripts.classes import Connection, Footpath, Stop, Trip
@@ -27,13 +30,13 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
     footpaths_per_from_to_stop_id = {}
     trips_per_id = {}
 
-    with ZipFile(path_to_gtfs_zip, "r") as zip:
+    with ZipFile(path_to_gtfs_zip, "r") as zip_file:
 
         # TODO connect ordinary stops with parent stops
         # TODO add Footpath if distance is small (not every transfer is definied in gtfs)
 
         log_start("parsing stops.txt", log)
-        with zip.open("stops.txt", "r") as gtfs_file: # required
+        with zip_file.open("stops.txt", "r") as gtfs_file: # required
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
             id_index = header.index("stop_id") # required
@@ -59,8 +62,8 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
         log_end(additional_message="# stops: {}".format(len(stops_per_id)))
 
         log_start("parsing transfers.txt", log)
-        if "transfers.txt" in zip.namelist():
-            with zip.open("transfers.txt", "r") as gtfs_file: # optional
+        if "transfers.txt" in zip_file.namelist():
+            with zip_file.open("transfers.txt", "r") as gtfs_file: # optional
                 reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
                 header = next(reader)
                 from_stop_id_index = header.index("from_stop_id") # required
@@ -99,13 +102,47 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
                 footpaths_per_from_to_stop_id[from_to_stop_id] = Footpath(stop_id, stop_id, 0) # hmmm, best guess!!
                 nb_loops += 1
         log_end(additional_message="# footpath loops added: {}, # footpaths total: {}".format(nb_loops, len(footpaths_per_from_to_stop_id)))
+        
+        # in a lot of gtfs-files the transfers.txt data is not complete at all.
+        # this is why we complete the footpaths by connection all stops close enough to each other.
+        # TODO test this
+        beeline_distance = 100.0 # meters
+        walking_speed = 2.0 / 3.6 # meters per second
+        nb_footspaths_perimeter = 0
+        log_start("adding footpaths in beeline perimeter with radius {}m".format(beeline_distance), log)
+        transformer = Transformer.from_proj(4326, 4088) # epsg:4326 is WGS84, epsg:4088 is world equidistant cylindrical (sphere)
+        log_start("transforming coordinates", log)
+        stop_list = list(stops_per_id.values())
+        easting_northing_list = [(s.easting, s.northing) for s in stop_list]
+        x_y_coordinates = [transformer.transform(p[0], p[1]) for p in easting_northing_list]
+        log_end()
+        log_start("creating quadtree for fast perimeter search", log)
+        tree = spatial.KDTree(x_y_coordinates)
+        log_end()
+        log_start("perimeter search around every stop", log)
+        for ind, a_stop in enumerate(stop_list):
+            x_y_a_stop = x_y_coordinates[ind]
+            for another_ind in tree.query_ball_point(x_y_a_stop, beeline_distance):
+                x_y_another_stop = x_y_coordinates[another_ind]
+                distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(x_y_a_stop, x_y_another_stop)])) # in meters
+                walking_time = distance / walking_speed
+                another_stop = stop_list[another_ind]
+                key = (a_stop.id, another_stop.id)
+                if key not in footpaths_per_from_to_stop_id:
+                    footpaths_per_from_to_stop_id[key] = Footpath(key[0], key[1], walking_time)
+                    nb_footspaths_perimeter += 1
+                if (key[1], key[0]) not in footpaths_per_from_to_stop_id:
+                    footpaths_per_from_to_stop_id[(key[1], key[0])] = Footpath(key[1], key[0], walking_time)
+                    nb_footspaths_perimeter += 1
+        log_end()
+        log_end(additional_message="# footpath within perimeter added: {}. # footpaths total: {}".format(nb_footspaths_perimeter, len(footpaths_per_from_to_stop_id)))
 
         log_start("parsing calendar.txt and calendar_dates.txt", log)
-        service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip, desired_date)
+        service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip_file, desired_date)
         log_end()
 
         log_start("parsing trips.txt", log)
-        trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id)
+        trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id)
         if len(trip_available_at_date_per_trip_id):
             msg = "# trips available at {}: {}".format(desired_date, len(trip_available_at_date_per_trip_id))
         else:
@@ -113,7 +150,7 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
         log_end(additional_message=msg)
 
         log_start("parsing stop_times.txt", log)
-        with zip.open("stop_times.txt", "r") as gtfs_file: # required
+        with zip_file.open("stop_times.txt", "r") as gtfs_file: # required
             reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
             header = next(reader)
             trip_id_index = header.index("trip_id") # required
@@ -160,10 +197,10 @@ def parse_gtfs(path_to_gtfs_zip, desired_date):
     return cs_data
 
 
-def get_service_available_at_date_per_service_id(zip, desired_date):
+def get_service_available_at_date_per_service_id(zip_file, desired_date):
     service_available_at_date_per_service_id = {}
     # TODO handle that calendar.txt and calendar_dates.txt are only conditionally required
-    with zip.open("calendar.txt", "r") as gtfs_file: # conditionally required, but we assume that the file exists
+    with zip_file.open("calendar.txt", "r") as gtfs_file: # conditionally required, but we assume that the file exists
         weekday_columns = ["monday", "tuesday", "wednesday", "thursday" , "friday", "saturday", "sunday"]
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
@@ -176,7 +213,7 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
             end_date = parse_yymmdd(row[end_date_index])
             service_available_at_date_per_service_id[row[service_id_index]] = True if start_date <= desired_date <= end_date and row[weekday_index] == "1" else False
 
-    with zip.open("calendar_dates.txt", "r") as gtfs_file: # conditionally required, but we assume that the file exists
+    with zip_file.open("calendar_dates.txt", "r") as gtfs_file: # conditionally required, but we assume that the file exists
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
         service_id_index = header.index("service_id") # required
@@ -195,9 +232,9 @@ def get_service_available_at_date_per_service_id(zip, desired_date):
                     raise ValueError("as exception_type only 1 or 2 are permitted, but is: {}".format(exception_type))
     return service_available_at_date_per_service_id
 
-def get_trip_available_at_date_per_trip_id(zip, service_available_at_date_per_service_id):
+def get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id):
     trip_available_at_date_per_trip_id = {}
-    with zip.open("trips.txt", "r") as gtfs_file: # required
+    with zip_file.open("trips.txt", "r") as gtfs_file: # required
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
         trip_id_index = header.index("trip_id") # required
