@@ -65,7 +65,8 @@ class ConnectionScanData:
         return res
 
 class ConnectionScanCore:
-    
+    # TODO implement optimized earliest arrival with reconstruction
+    # TODO implement routing by name
     def __init__(self, connection_scan_data):
         log_start("creating ConnectionScanData", log)
         # static per ConnectionScanCore
