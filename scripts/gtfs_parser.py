@@ -3,18 +3,18 @@
 
 import csv
 import logging
+import math
 import time
 from io import TextIOWrapper
 from zipfile import ZipFile
 from pyproj import Transformer
 from scipy import spatial
-import math
 
-from scripts.helpers.my_logging import log_end, log_start
 from scripts.classes import Connection, Footpath, Stop, Trip
 from scripts.connectionscan_router import ConnectionScanData
 from scripts.helpers import my_logging
-from scripts.helpers.funs import parse_yymmdd, hhmmss_to_sec
+from scripts.helpers.funs import hhmmss_to_sec, parse_yymmdd
+from scripts.helpers.my_logging import log_end, log_start
 
 ENCODING = "utf-8-sig" # we use utf-8-sig since gtfs-data from switzerland are encoded in utf-8-with-bom
 
@@ -24,7 +24,13 @@ def get_index_with_default(header, column_name, default_value=None):
     return header.index(column_name) if column_name in header else default_value
  
 
-def parse_gtfs(path_to_gtfs_zip, desired_date, beeline_distance = 100.0, walking_speed = 2.0 / 3.6): # beeline_distance in meters, walking_speed in meters per second)
+def parse_gtfs(
+    path_to_gtfs_zip, 
+    desired_date, 
+    add_beeline_footpaths=True,
+    beeline_distance=100.0, # in meters 
+    walking_speed=2.0/3.6 # meters per second
+    ):
     log_start("parsing gtfs-file for desired date {} ({})".format(desired_date, path_to_gtfs_zip), log)
     stops_per_id = {}
     footpaths_per_from_to_stop_id = {}
@@ -99,37 +105,10 @@ def parse_gtfs(path_to_gtfs_zip, desired_date, beeline_distance = 100.0, walking
                 nb_loops += 1
         log_end(additional_message="# footpath loops added: {}, # footpaths total: {}".format(nb_loops, len(footpaths_per_from_to_stop_id)))
         
-        # in a lot of gtfs-files the transfers.txt data is not complete at all.
-        # this is why we complete the footpaths by connection all stops close enough to each other.
-        # TODO test this
-        nb_footspaths_perimeter = 0
-        log_start("adding footpaths in beeline perimeter with radius {}m".format(beeline_distance), log)
-        transformer = Transformer.from_proj(4326, 4088) # epsg:4326 is WGS84, epsg:4088 is world equidistant cylindrical (sphere)
-        log_start("transforming coordinates", log)
-        stop_list = list(stops_per_id.values())
-        easting_northing_list = [(s.easting, s.northing) for s in stop_list]
-        x_y_coordinates = [transformer.transform(p[0], p[1]) for p in easting_northing_list]
-        log_end()
-        log_start("creating quadtree for fast perimeter search", log)
-        tree = spatial.KDTree(x_y_coordinates)
-        log_end()
-        log_start("perimeter search around every stop", log)
-        for ind, a_stop in enumerate(stop_list):
-            x_y_a_stop = x_y_coordinates[ind]
-            for another_ind in tree.query_ball_point(x_y_a_stop, beeline_distance):
-                x_y_another_stop = x_y_coordinates[another_ind]
-                distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(x_y_a_stop, x_y_another_stop)])) # in meters
-                walking_time = distance / walking_speed
-                another_stop = stop_list[another_ind]
-                key = (a_stop.id, another_stop.id)
-                if key not in footpaths_per_from_to_stop_id:
-                    footpaths_per_from_to_stop_id[key] = Footpath(key[0], key[1], walking_time)
-                    nb_footspaths_perimeter += 1
-                if (key[1], key[0]) not in footpaths_per_from_to_stop_id:
-                    footpaths_per_from_to_stop_id[(key[1], key[0])] = Footpath(key[1], key[0], walking_time)
-                    nb_footspaths_perimeter += 1
-        log_end()
-        log_end(additional_message="# footpath within perimeter added: {}. # footpaths total: {}".format(nb_footspaths_perimeter, len(footpaths_per_from_to_stop_id)))
+        if add_beeline_footpaths:
+            create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beeline_distance, walking_speed)
+        else:
+            log.info("adding beeline footpaths is deactivated")
 
         log_start("parsing calendar.txt and calendar_dates.txt", log)
         service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip_file, desired_date)
@@ -236,3 +215,42 @@ def get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_p
         for row in reader:
             trip_available_at_date_per_trip_id[row[trip_id_index]] = service_available_at_date_per_service_id[row[service_id_index]]
     return trip_available_at_date_per_trip_id
+
+def create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beeline_distance, walking_speed):
+    """
+    adds beeline footpaths footpaths_per_from_to_stop_id from one stop to another 
+    if there is no footpath already defined and the distance between them is <= beeline_distance.
+    reason: in a lot of gtfs-files the transfers.txt data is not complete at all.
+    """
+    nb_footspaths_perimeter = 0
+    log_start("adding footpaths in beeline perimeter with radius {}m".format(beeline_distance), log)
+    transformer = Transformer.from_proj(4326, 4088) # epsg:4326 is WGS84, epsg:4088 is world equidistant cylindrical (sphere)
+    log_start("transforming coordinates", log)
+    stop_list = list(stops_per_id.values())
+    easting_northing_list = [(s.easting, s.northing) for s in stop_list]
+    x_y_coordinates = [transformer.transform(p[0], p[1]) for p in easting_northing_list]
+    log_end()
+    log_start("creating quadtree for fast perimeter search", log)
+    tree = spatial.KDTree(x_y_coordinates)
+    log_end()
+    log_start("perimeter search around every stop", log)
+    for ind, a_stop in enumerate(stop_list):
+        x_y_a_stop = x_y_coordinates[ind]
+        for another_ind in tree.query_ball_point(x_y_a_stop, beeline_distance):
+            x_y_another_stop = x_y_coordinates[another_ind]
+            distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(x_y_a_stop, x_y_another_stop)])) # in meters
+            walking_time = distance / walking_speed
+            another_stop = stop_list[another_ind]
+            log.info("distance from {} to {}: {}".format(a_stop, another_stop, distance))
+            key = (a_stop.id, another_stop.id)
+            if key not in footpaths_per_from_to_stop_id:
+                footpaths_per_from_to_stop_id[key] = Footpath(key[0], key[1], walking_time)
+                nb_footspaths_perimeter += 1
+            if (key[1], key[0]) not in footpaths_per_from_to_stop_id:
+                footpaths_per_from_to_stop_id[(key[1], key[0])] = Footpath(key[1], key[0], walking_time)
+                nb_footspaths_perimeter += 1
+    log_end()
+    log_end(additional_message="# footpath within perimeter added: {}. # footpaths total: {}".format(
+        nb_footspaths_perimeter, 
+        len(footpaths_per_from_to_stop_id)
+        ))

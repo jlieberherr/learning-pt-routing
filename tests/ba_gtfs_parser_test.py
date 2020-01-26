@@ -10,8 +10,10 @@ import pytest
 from scripts.connectionscan_router import ConnectionScanCore
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
-                                 parse_gtfs)
+                                 parse_gtfs,
+                                 create_beeline_footpaths)
 from scripts.helpers.funs import hhmmss_to_sec
+from scripts.classes import Stop, Footpath
 
 PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
 
@@ -111,6 +113,40 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         assert trip_available_at_date_per_trip_id["18.TA.6-1-j19-1.17.H"]
         assert not trip_available_at_date_per_trip_id["41.TA.6-1-j19-1.37.R"]
         assert not trip_available_at_date_per_trip_id["3.TA.90-73-Y-j19-1.2.H"]
+
+def test_create_beeline_footpaths():
+    wattwil = Stop("Wattwil", "", "", 9.0864591001338, 47.2994765484827)
+    wattwil_bahnhof = Stop("Wattwil, Bahnhof", "", "", 9.08679147678897, 47.2994582722627)
+    pontresina = Stop("Pontresina", "", "", 9.89607473321206, 46.4906506582138)
+    pontresina_bahnhof = Stop("Pontresina, Bahnhof", "", "", 9.89608371636491, 46.4910341056312)
+    pontresina_post = Stop("Pontresina, Post", "", "", 9.90654010627351, 46.4880901497136)
+    bern = Stop("Bern", "", "", 7.43911954873327, 46.9488249647708)
+    bern_bahnhof = Stop("Bern, Bahnhof", "", "", 7.44020651022721, 46.948107473715)
+    stops = [
+        wattwil,
+        wattwil_bahnhof,
+        pontresina,
+        pontresina_bahnhof,
+        pontresina_post,
+        bern,
+        bern_bahnhof
+    ]
+    stops_per_id = {s.id: s for s in stops}
+    footpaths = {
+        Footpath(wattwil.id, wattwil_bahnhof.id, 120),
+        Footpath(wattwil_bahnhof.id, wattwil.id, 120),
+    }
+    footpaths_per_from_to_stop_id = {(f.from_stop_id, f.to_stop_id): f for f in footpaths}
+    create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beeline_distance=100, walking_speed=2/3.6)
+    assert 120 == footpaths_per_from_to_stop_id[wattwil.id, wattwil_bahnhof.id].walking_time
+    assert 120 == footpaths_per_from_to_stop_id[wattwil_bahnhof.id, wattwil.id].walking_time
+    assert (pontresina.id, pontresina_bahnhof.id) in footpaths_per_from_to_stop_id
+    assert (pontresina_bahnhof.id, pontresina.id) in footpaths_per_from_to_stop_id
+    assert (pontresina.id, pontresina_post.id) not  in footpaths_per_from_to_stop_id
+    assert (pontresina_post.id, pontresina.id) not in footpaths_per_from_to_stop_id
+    assert (bern.id, bern_bahnhof.id) not in footpaths_per_from_to_stop_id
+    assert (bern_bahnhof.id, bern.id) not in footpaths_per_from_to_stop_id
+
 
 def run_test_real_gtfs_files(): # long running times. replace run by test to run this with pytest.
     parse_gtfs(r"D:\data\90_divers\gtfs (1).zip", date(2019, 10, 16)) 
