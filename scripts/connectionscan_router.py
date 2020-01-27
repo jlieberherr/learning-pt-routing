@@ -5,9 +5,9 @@ import logging
 import time
 from collections import defaultdict
 
-from scripts.helpers.funs import seconds_to_hhmmss
+from scripts.classes import Journey, JourneyLeg
+from scripts.helpers.funs import hhmmss_to_sec, seconds_to_hhmmss
 from scripts.helpers.my_logging import log_end, log_start
-from scripts.classes import JourneyLeg, Journey
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +66,6 @@ class ConnectionScanData:
 
 class ConnectionScanCore:
     # TODO implement optimized earliest arrival with reconstruction
-    # TODO implement routing by name
     def __init__(self, connection_scan_data):
         log_start("creating ConnectionScanData", log)
         # static per ConnectionScanCore
@@ -76,6 +75,20 @@ class ConnectionScanCore:
         for footpath in self.connection_scan_data.footpaths_per_from_to_stop_id.values():
             self.outgoing_footpaths_per_stop_id[footpath.from_stop_id] += [footpath]
         log_end()
+    
+    def route_earliest_arrival_by_name(self, from_stop_name, to_stop_name, desired_dep_time_hhmmss):
+        return self.route_earliest_arrival(
+            self.connection_scan_data.stops_per_name[from_stop_name].id,
+            self.connection_scan_data.stops_per_name[to_stop_name].id,
+            hhmmss_to_sec(desired_dep_time_hhmmss)
+        )
+    
+    def route_earliest_arrival_with_reconstruction_by_name(self, from_stop_name, to_stop_name, desired_dep_time_hhmmss):
+        return self.route_earliest_arrival_with_reconstruction(
+            self.connection_scan_data.stops_per_name[from_stop_name].id,
+            self.connection_scan_data.stops_per_name[to_stop_name].id,
+            hhmmss_to_sec(desired_dep_time_hhmmss)
+        )        
 
     
     def route_earliest_arrival(self, from_stop_id, to_stop_id, desired_dep_time):

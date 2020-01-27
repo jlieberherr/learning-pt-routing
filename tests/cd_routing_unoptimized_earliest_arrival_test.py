@@ -48,3 +48,8 @@ def test_unoptimized_earliest_arrival_bern_bern_bahnhof():
     cs_data = create_test_connectionscan_data()
     cs_core = ConnectionScanCore(cs_data)
     assert "12:14:46" == seconds_to_hhmmss(cs_core.route_earliest_arrival(bern.id, bern_bahnhof.id, hhmmss_to_sec("12:09:46")))
+
+def test_unoptimized_earliest_arrival_by_name_bern_bern_bahnhof():
+    cs_data = create_test_connectionscan_data()
+    cs_core = ConnectionScanCore(cs_data)
+    assert "12:14:46" == seconds_to_hhmmss(cs_core.route_earliest_arrival_by_name(bern.name, bern_bahnhof.name, "12:09:46"))

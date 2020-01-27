@@ -241,7 +241,6 @@ def create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beelin
             distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(x_y_a_stop, x_y_another_stop)])) # in meters
             walking_time = distance / walking_speed
             another_stop = stop_list[another_ind]
-            log.info("distance from {} to {}: {}".format(a_stop, another_stop, distance))
             key = (a_stop.id, another_stop.id)
             if key not in footpaths_per_from_to_stop_id:
                 footpaths_per_from_to_stop_id[key] = Footpath(key[0], key[1], walking_time)
