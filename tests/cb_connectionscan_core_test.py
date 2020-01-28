@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from scripts.classes import Connection, Footpath, Stop, Trip
-from scripts.connectionscan_router import ConnectionScanData, ConnectionScanCore
+from scripts.connectionscan_router import ConnectionScanData
 from scripts.helpers.funs import seconds_to_hhmmss, hhmmss_to_sec
 
 fribourg = Stop("1", "FR", "Fribourg/Freiburg", 0.0, 0.0)
@@ -17,42 +17,44 @@ thusis = Stop("9", "TH", "Thusis", 0.0, 0.0)
 samedan = Stop("10", "SAM", "Samedan", 0.0, 0.0)
 st_moritz = Stop("11", "SM", "St. Moritz", 0.0, 0.0)
 bern_duebystrasse = Stop("12", "", "Bern, Dübystrasse", 0.0, 0.0)
-koenz_zentrum = Stop("13", "", "Köniz, Zentrum", 0.0, 0.0)
+koeniz_zentrum = Stop("13", "", "Köniz, Zentrum", 0.0, 0.0)
 bern_bahnhof = Stop("14", "", "Bern, Bahnhof", 0.0, 0.0)
 ostermundigen_bahnhof = Stop("15", "", "Ostermundigen, Bahnhof", 0.0, 0.0)
 samedan_bahnhof = Stop("16", "", "Samedan, Bahnhof", 0.0, 0.0)
 samedan_spital = Stop("17", "", "Samedan, Spital", 0.0, 0.0)
 
-def create_test_connectionscan_data():
 
+def create_test_connectionscan_data():
     stops_per_id = {s.id: s for s in [
-        fribourg, 
-        bern, 
-        zuerich_hb, 
-        winterthur, 
-        st_gallen, 
-        interlaken_ost, 
-        basel_sbb, 
-        chur, 
-        thusis, 
-        samedan, 
-        st_moritz, 
-        bern_duebystrasse, 
-        koenz_zentrum,
+        fribourg,
+        bern,
+        zuerich_hb,
+        winterthur,
+        st_gallen,
+        interlaken_ost,
+        basel_sbb,
+        chur,
+        thusis,
+        samedan,
+        st_moritz,
+        bern_duebystrasse,
+        koeniz_zentrum,
         bern_bahnhof,
         ostermundigen_bahnhof,
         samedan_bahnhof,
         samedan_spital,
-        ]}
-    
+    ]}
+
     footpaths_per_from_stop_to_stop_id = {(s.id, s.id): Footpath(s.id, s.id, 2 * 60) for s in stops_per_id.values()}
     footpaths_per_from_stop_to_stop_id[(zuerich_hb.id, zuerich_hb.id)] = Footpath(zuerich_hb.id, zuerich_hb.id, 7 * 60)
-    footpaths_per_from_stop_to_stop_id[(bern.id, bern.id)] =  Footpath(bern.id, bern.id, 5 * 60)
+    footpaths_per_from_stop_to_stop_id[(bern.id, bern.id)] = Footpath(bern.id, bern.id, 5 * 60)
     footpaths_per_from_stop_to_stop_id[(bern_bahnhof.id, bern.id)] = Footpath(bern_bahnhof.id, bern.id, 5 * 60)
     footpaths_per_from_stop_to_stop_id[(bern.id, bern_bahnhof.id)] = Footpath(bern.id, bern_bahnhof.id, 5 * 60)
     footpaths_per_from_stop_to_stop_id[(chur.id, chur.id)] = Footpath(chur.id, chur.id, 4 * 60)
-    footpaths_per_from_stop_to_stop_id[(samedan.id, samedan_bahnhof.id)] = Footpath(samedan.id, samedan_bahnhof.id, 3 * 60)
-    footpaths_per_from_stop_to_stop_id[(samedan_bahnhof.id, samedan.id)] = Footpath(samedan_bahnhof.id, samedan.id, 3 * 60)
+    footpaths_per_from_stop_to_stop_id[(samedan.id, samedan_bahnhof.id)] = Footpath(samedan.id, samedan_bahnhof.id,
+                                                                                    3 * 60)
+    footpaths_per_from_stop_to_stop_id[(samedan_bahnhof.id, samedan.id)] = Footpath(samedan_bahnhof.id, samedan.id,
+                                                                                    3 * 60)
 
     trips = []
 
@@ -85,7 +87,7 @@ def create_test_connectionscan_data():
 
     trips += get_forth_and_back_trips(
         [chur, thusis, samedan, st_moritz],
-        [30 * 60, 75 * 60, 12 * 60], 
+        [30 * 60, 75 * 60, 12 * 60],
         [2 * 60, 6 * 60],
         hhmmss_to_sec("05:58:00"),
         16,
@@ -93,7 +95,7 @@ def create_test_connectionscan_data():
     )
 
     trips += get_forth_and_back_trips(
-        [koenz_zentrum, bern_duebystrasse, bern_bahnhof, ostermundigen_bahnhof],
+        [koeniz_zentrum, bern_duebystrasse, bern_bahnhof, ostermundigen_bahnhof],
         [6 * 60, 7 * 60, 15 * 60],
         [0, 0],
         hhmmss_to_sec("05:00:00"),
@@ -118,6 +120,7 @@ def create_trips(stops, running_times, stop_times, first_departure, nb_trips, he
         dep_first_stop = first_departure + trip_index * headway
         trip_id = "{}_{}_{}_{}".format(stops[0].name, stops[-1].name, seconds_to_hhmmss(dep_first_stop), trip_index)
         cons = []
+        arr = None
         for stop_index in range(len(stops) - 1):
             dep = dep_first_stop if stop_index == 0 else arr + stop_times[stop_index - 1]
             arr = dep + running_times[stop_index]
@@ -125,12 +128,13 @@ def create_trips(stops, running_times, stop_times, first_departure, nb_trips, he
         trips += [Trip(trip_id, cons)]
     return trips
 
+
 def test_create_trips():
     dep_first_trip_first_stop = 5 * 60 * 60 + 42 * 60
     trips_fri_sg = create_trips(
-        [fribourg, bern, zuerich_hb, winterthur, st_gallen], 
+        [fribourg, bern, zuerich_hb, winterthur, st_gallen],
         [14 * 60, 58 * 60, 20 * 60, 38 * 60],
-        [6 * 60, 5 * 60, 3 * 60], 
+        [6 * 60, 5 * 60, 3 * 60],
         dep_first_trip_first_stop,
         32,
         30 * 60)
@@ -142,7 +146,6 @@ def test_create_trips():
     assert "4" == trips_fri_sg[3].connections[-1].from_stop_id
     assert "5" == trips_fri_sg[3].connections[-1].to_stop_id
 
-
     assert "08:12:00" == seconds_to_hhmmss(trips_fri_sg[5].connections[0].dep_time)
     assert "08:26:00" == seconds_to_hhmmss(trips_fri_sg[5].connections[0].arr_time)
     assert "08:32:00" == seconds_to_hhmmss(trips_fri_sg[5].connections[1].dep_time)
@@ -152,27 +155,29 @@ def test_create_trips():
     assert "09:58:00" == seconds_to_hhmmss(trips_fri_sg[5].connections[3].dep_time)
     assert "10:36:00" == seconds_to_hhmmss(trips_fri_sg[5].connections[3].arr_time)
 
+
 def get_forth_and_back_trips(stops, running_times, stop_times, dep_first_trip, nb_trips, headway):
     return create_trips(
-        stops, 
-        running_times, 
-        stop_times, 
-        dep_first_trip, 
-        nb_trips, 
+        stops,
+        running_times,
+        stop_times,
+        dep_first_trip,
+        nb_trips,
         headway) + create_trips(
-            list(reversed(stops)),
-            list(reversed(running_times)),
-            list(reversed(stop_times)),
-            dep_first_trip,
-            nb_trips,
-            headway)
+        list(reversed(stops)),
+        list(reversed(running_times)),
+        list(reversed(stop_times)),
+        dep_first_trip,
+        nb_trips,
+        headway)
+
 
 def test_get_forth_and_back_trips():
     dep_first_trip_first_stop = 5 * 60 * 60 + 42 * 60
     trips = get_forth_and_back_trips(
-        [fribourg, bern, zuerich_hb, winterthur, st_gallen], 
+        [fribourg, bern, zuerich_hb, winterthur, st_gallen],
         [14 * 60, 58 * 60, 20 * 60, 38 * 60],
-        [6 * 60, 5 * 60, 3 * 60], 
+        [6 * 60, 5 * 60, 3 * 60],
         dep_first_trip_first_stop,
         32,
         30 * 60)
