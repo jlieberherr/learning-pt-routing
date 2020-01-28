@@ -5,22 +5,27 @@ import os
 import sys
 import time
 from collections import deque, namedtuple
-from logging import Logger
 
 from scripts.helpers.funs import seconds_to_hhmmssms
 
 LogEntry = namedtuple("LogEntry", ["message", "start_time", "logger"])
 log_stack = deque()
-   
+
+
 def log_start(message, logger):
     log_stack.append(LogEntry(message, time.time(), logger))
     logger.info("({}) start {}.".format(len(log_stack), message))
-    
+
+
 def log_end(additional_message=None):
     n = len(log_stack)
     log_entry = log_stack.pop()
-    log_message = "({}) end {}. time elapsed: {}{}".format(n, log_entry.message, seconds_to_hhmmssms(time.time() - log_entry.start_time), ". {}. ".format(additional_message) if additional_message else ".")
+    log_message = "({}) end {}. time elapsed: {}{}".format(n, log_entry.message,
+                                                           seconds_to_hhmmssms(time.time() - log_entry.start_time),
+                                                           ". {}. ".format(
+                                                               additional_message) if additional_message else ".")
     log_entry.logger.info(log_message)
+
 
 def init_logging(directory, file_name):
     logger = logging.getLogger()
