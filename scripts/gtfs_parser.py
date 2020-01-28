@@ -73,6 +73,7 @@ def parse_gtfs(
                 transfer_type_index = header.index("transfer_type") # required
                 min_transfer_time_index = get_index_with_default(header, "min_transfer_time") # optional
                 if min_transfer_time_index:
+                    nb_footpaths_not_added = 0
                     for row in reader:
                         if row[transfer_type_index] == "2":
                             from_stop_id = row[from_stop_id_index]
@@ -84,8 +85,10 @@ def parse_gtfs(
                                     int(row[min_transfer_time_index])
                                 )
                             else:
-                                log.info("footpath from {} to {} cannot be definied since not both stops are defined in stops.txt".format(from_stop_id, to_stop_id))
-                                
+                                nb_footpaths_not_added += 1
+                                log.debug("footpath from {} to {} cannot be definied since not both stops are defined in stops.txt".format(from_stop_id, to_stop_id))
+                    if nb_footpaths_not_added > 0:
+                        log.info("{} rows from transfers.txt were not added to footpaths since either the from_stop_id or to_stop_id is not defined in stops.txt.".format(nb_footpaths_not_added))          
                 else:
                     raise ValueError("min_transfer_time column in gtfs transfers.txt file is not definied, cannot calculate footpaths.")
         log_end(additional_message="# footpaths from transfers.txt: {}".format(len(footpaths_per_from_to_stop_id)))
