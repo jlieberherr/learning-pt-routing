@@ -3,6 +3,7 @@
 
 from datetime import date
 
+
 def parse_yymmdd(yymmdd_str):
     y = int(yymmdd_str[:4])
     m = int(yymmdd_str[4:6])
@@ -31,6 +32,7 @@ def seconds_to_hhmmss(seconds):
     h, m = divmod(m, 60)
     return "{:02d}:{:02d}:{:02d}".format(h, m, s)
 
+
 def binary_search(sorted_list, value, value_picker):
     """
     executes a binary search on sorted_list.
@@ -39,6 +41,7 @@ def binary_search(sorted_list, value, value_picker):
     value_picker defines the value of the elements in sorted_list.
     """
     n = len(sorted_list)
+
     def binary_search_recursive(from_index, to_index):
         if from_index > to_index or from_index >= n or to_index < 0:
             return None
@@ -52,4 +55,5 @@ def binary_search(sorted_list, value, value_picker):
                 return mid
             else:
                 return binary_search_recursive(from_index, mid - 1)
+
     return binary_search_recursive(0, n - 1)
