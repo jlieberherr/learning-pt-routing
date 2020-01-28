@@ -39,4 +39,3 @@ def init_logging(directory, file_name):
     file_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
     logger.addHandler(file_handler)
-    log_stack = deque()

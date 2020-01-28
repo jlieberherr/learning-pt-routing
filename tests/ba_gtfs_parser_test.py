@@ -1,19 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from builtins import id
 from datetime import date
 from zipfile import ZipFile
 
 import pytest
 
-from scripts.connectionscan_router import ConnectionScanCore
+from scripts.classes import Stop, Footpath
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
                                  parse_gtfs,
                                  create_beeline_footpaths)
 from scripts.helpers.funs import hhmmss_to_sec
-from scripts.classes import Stop, Footpath
 
 PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
 
@@ -32,7 +30,7 @@ def test_gtfs_parser():
         assert exp_easting == a_stop.easting
         assert exp_northing == a_stop.northing
         assert exp_is_station == a_stop.is_station
-        assert exp_parent_station_id == a_stop.parent_station_id
+        assert (exp_parent_station_id if exp_parent_station_id else None) == a_stop.parent_station_id
 
     check_stop("8500218:0:7", "", "Olten", 7.90768978414808, 47.3522319182299, False, "8500218P")
     check_stop("8587654", "", "Glattbrugg, Glatthof", 8.56762812456551, 47.434511142518, False, None)
@@ -86,27 +84,30 @@ def test_gtfs_parser():
     check_connection_on_trip("2.TA.1-85-j19-1.1.H", 15, "8572656", "8572648", "06:18:00", "06:23:00")
 
     with pytest.raises(KeyError):
+        # noinspection PyStatementEffect
         cs_data.trips_per_id["3.TA.90-73-Y-j19-1.2.H"]
 
     with pytest.raises(KeyError):
+        # noinspection PyStatementEffect
         cs_data.trips_per_id["471.TA.26-759-j19-1.5.R"]
 
 
 def test_get_service_available_at_date_per_service_id_get_trip_available_at_date_per_trip_id():
-    with ZipFile(PATH_GTFS_TEST_SAMPLE, "r") as zip:
+    with ZipFile(PATH_GTFS_TEST_SAMPLE, "r") as zip_file:
         # calendar.txt and # calendar_dates.txt
-        service_abailable_at_date_per_service_id = get_service_available_at_date_per_service_id(zip, date(2019, 1, 18))
+        service_available_at_date_per_service_id = \
+            get_service_available_at_date_per_service_id(zip_file, date(2019, 1, 18))
         # 2019-01-18 was a friday
-        assert 46 == len(service_abailable_at_date_per_service_id)
-        assert service_abailable_at_date_per_service_id["TA+b0001"]
-        assert not service_abailable_at_date_per_service_id["TA+b02i1"]
-        assert not service_abailable_at_date_per_service_id["TA+b00va"]  # removed by calendar_dates.txt
-        assert service_abailable_at_date_per_service_id["TA+b02ro"]
-        assert not service_abailable_at_date_per_service_id["TA+b03ur"]  # removed by calendar_dates.txt
+        assert 46 == len(service_available_at_date_per_service_id)
+        assert service_available_at_date_per_service_id["TA+b0001"]
+        assert not service_available_at_date_per_service_id["TA+b02i1"]
+        assert not service_available_at_date_per_service_id["TA+b00va"]  # removed by calendar_dates.txt
+        assert service_available_at_date_per_service_id["TA+b02ro"]
+        assert not service_available_at_date_per_service_id["TA+b03ur"]  # removed by calendar_dates.txt
 
         # trips.txt
-        trip_available_at_date_per_trip_id = get_trip_available_at_date_per_trip_id(zip,
-                                                                                    service_abailable_at_date_per_service_id)
+        trip_available_at_date_per_trip_id = \
+            get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id)
         assert 2272 == len(trip_available_at_date_per_trip_id)
         assert trip_available_at_date_per_trip_id["1.TA.1-85-j19-1.1.H"]
         assert trip_available_at_date_per_trip_id["2.TA.1-85-j19-1.1.H"]
@@ -149,18 +150,3 @@ def test_create_beeline_footpaths():
     assert (pontresina_post.id, pontresina.id) not in footpaths_per_from_to_stop_id
     assert (bern.id, bern_bahnhof.id) not in footpaths_per_from_to_stop_id
     assert (bern_bahnhof.id, bern.id) not in footpaths_per_from_to_stop_id
-
-
-def run_test_real_gtfs_files():  # long running times. replace run by test to run this with pytest.
-    parse_gtfs(r"D:\data\90_divers\gtfs (1).zip", date(2019, 10, 16))
-    # time elapsed: 00:00:22.553. ConnectionsScanData: # stops: 41828, # footpaths: 78550, # trips: 58852, # connections: 1301028.
-
-    parse_gtfs(r"D:\data\90_divers\gtfs (2).zip", date(2019, 8, 1))
-    # time elapsed: 00:00:01.797. ConnectionsScanData: # stops: 6456, # footpaths: 0, # trips: 2241, # connections: 94565.
-
-    cs_data_ch = parse_gtfs(r"D:\data\90_divers\gtfs (3).zip", date(2019, 1, 18))
-    # time elapsed: 00:01:01.608. ConnectionsScanData: # stops: 31184, # footpaths: 26620, # trips: 291882, # connections: 2179238. 
-
-    cs_core_ch = ConnectionScanCore(cs_data_ch)
-    cs_core_ch.route(cs_data_ch.stops_per_name["Bern"].id, cs_data_ch.stops_per_name["Samedan"].id,
-                     hhmmss_to_sec("06:18:27"))
