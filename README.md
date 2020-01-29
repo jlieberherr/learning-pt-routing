@@ -54,7 +54,7 @@ unit tests with [pytest](https://docs.pytest.org/en/latest/index.html), [Jupyter
 We assume that the following software is installed on your computer:
 - [Python 3.8 (64-bit)](https://www.python.org/downloads/release/python-381/.)
 - [git](https://git-scm.com/downloads)
-- A powerful text editor (i.e. (Sublime Text)[https://www.sublimetext.com/]) or 
+- A powerful text editor (i.e. [Sublime Text](https://www.sublimetext.com/])) or 
 IDE (i.e. [Visual Studio Code](https://code.visualstudio.com/) or 
 [PyCharm](https://www.jetbrains.com/de-de/pycharm/)) for developing the code.
 
