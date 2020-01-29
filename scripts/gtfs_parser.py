@@ -188,7 +188,6 @@ def parse_gtfs(
 
 def get_service_available_at_date_per_service_id(zip_file, desired_date):
     service_available_at_date_per_service_id = {}
-    # TODO handle that calendar.txt and calendar_dates.txt are only conditionally required
     with zip_file.open("calendar.txt", "r") as gtfs_file:  # conditionally required, but we assume that the file exists
         weekday_columns = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))

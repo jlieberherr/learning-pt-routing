@@ -245,7 +245,7 @@ class ConnectionScanCore:
             res = journey
         else:
             res = None
-        log_end(additional_message="# journey legs: {}".format(res.get_nb_journey_legs()))
+        log_end(additional_message="# journey legs: {}".format(0 if res is None else res.get_nb_journey_legs()))
         return res
 
     def route_optimized_earliest_arrival_with_reconstruction(self, from_stop_id, to_stop_id, desired_dep_time):
@@ -334,5 +334,5 @@ class ConnectionScanCore:
             res = journey
         else:
             res = None
-        log_end(additional_message="# journey legs: {}".format(res.get_nb_journey_legs()))
+        log_end(additional_message="# journey legs: {}".format(0 if res is None else res.get_nb_journey_legs()))
         return res
