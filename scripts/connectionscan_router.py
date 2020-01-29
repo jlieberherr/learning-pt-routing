@@ -78,7 +78,6 @@ class ConnectionScanData:
 
 
 class ConnectionScanCore:
-    # TODO implement optimized earliest arrival with reconstruction
     def __init__(self, connection_scan_data):
         log_start("creating ConnectionScanData", log)
         # static per ConnectionScanCore
