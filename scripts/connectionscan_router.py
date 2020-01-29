@@ -282,34 +282,42 @@ class ConnectionScanCore:
                 earliest_arrival_at_target = arr_time
 
         # scan connections
-        start_index = binary_search(self.connection_scan_data.sorted_connections, desired_dep_time,
-                                    lambda c: c.dep_time)
+
+        start_index = binary_search(self.connection_scan_data.sorted_connections,
+                                    desired_dep_time,
+                                    lambda c: c.dep_time) # optimization 1: starting criterion
         for con_index in range(start_index, len(self.connection_scan_data.sorted_connections)):
             con = self.connection_scan_data.sorted_connections[con_index]
-            in_connection = in_connection_per_trip_id.get(con.trip_id, None)
-            if (in_connection is not None or
-                    earliest_arrival_including_transfer_time_per_stop_id.get(
-                        con.from_stop_id,
-                        self.MAX_ARR_TIME_VALUE) <= con.dep_time):
-                if in_connection is None:
-                    in_connection_per_trip_id[con.trip_id] = con
-                for footpath in self.outgoing_footpaths_per_stop_id[con.to_stop_id]:
-                    if con.arr_time + footpath.walking_time < earliest_arrival_including_transfer_time_per_stop_id.get(
-                            footpath.to_stop_id, self.MAX_ARR_TIME_VALUE):
-                        earliest_arrival_including_transfer_time_per_stop_id[
-                            footpath.to_stop_id] = con.arr_time + footpath.walking_time
-                        last_journey_leg_per_stop_id[footpath.to_stop_id] = JourneyLeg(
-                            in_connection_per_trip_id[con.trip_id], con, footpath)
-                    if footpath.to_stop_id == to_stop_id:
-                        # handle earliest_arrival_at_target separately
-                        # (we do not want to add a walking time if it is not necessary)
-                        arr_time = con.arr_time + (
-                            0 if footpath.from_stop_id == footpath.to_stop_id else footpath.walking_time)
-                        if arr_time < earliest_arrival_at_target:
-                            earliest_arrival_at_target = arr_time
-                            last_footpath = None if footpath.from_stop_id == footpath.to_stop_id else footpath
-                            last_journey_leg_at_target = JourneyLeg(in_connection_per_trip_id[con.trip_id], con,
-                                                                    last_footpath)
+
+            if earliest_arrival_at_target > con.dep_time: # optimization 2: stopping criterion
+                in_connection = in_connection_per_trip_id.get(con.trip_id, None)
+                if (in_connection is not None or
+                        earliest_arrival_including_transfer_time_per_stop_id.get(
+                            con.from_stop_id,
+                            self.MAX_ARR_TIME_VALUE) <= con.dep_time):
+                    if in_connection is None:
+                        in_connection_per_trip_id[con.trip_id] = con
+                    if con.arr_time < earliest_arrival_including_transfer_time_per_stop_id.get(con.to_stop_id,
+                                                                                               self.MAX_ARR_TIME_VALUE):
+                        # optimization 3: limited walking
+                        for footpath in self.outgoing_footpaths_per_stop_id[con.to_stop_id]:
+                            if (con.arr_time + footpath.walking_time <
+                                    earliest_arrival_including_transfer_time_per_stop_id.get(footpath.to_stop_id,
+                                                                                             self.MAX_ARR_TIME_VALUE)):
+                                earliest_arrival_including_transfer_time_per_stop_id[
+                                    footpath.to_stop_id] = con.arr_time + footpath.walking_time
+                                last_journey_leg_per_stop_id[footpath.to_stop_id] = JourneyLeg(
+                                    in_connection_per_trip_id[con.trip_id], con, footpath)
+                            if footpath.to_stop_id == to_stop_id:
+                                # handle earliest_arrival_at_target separately
+                                # (we do not want to add a walking time if it is not necessary)
+                                arr_time = con.arr_time + (
+                                    0 if footpath.from_stop_id == footpath.to_stop_id else footpath.walking_time)
+                                if arr_time < earliest_arrival_at_target:
+                                    earliest_arrival_at_target = arr_time
+                                    last_footpath = None if footpath.from_stop_id == footpath.to_stop_id else footpath
+                                    last_journey_leg_at_target = JourneyLeg(in_connection_per_trip_id[con.trip_id], con,
+                                                                            last_footpath)
 
         # reconstruct journey
         last_journey_leg_per_stop_id[to_stop_id] = last_journey_leg_at_target
