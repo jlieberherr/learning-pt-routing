@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from enum import Enum
 
 from scripts.helpers.funs import seconds_to_hhmmss
 
@@ -244,10 +245,22 @@ class Journey:
         return str(self)
 
 
-class Trip:
-    __slots__ = ["id", "connections"]
+class TripType(Enum):
+    TRAM = 0
+    SUBWAY = 1
+    RAIL = 2
+    BUS = 3
+    FERRY = 4
+    CABLE_CAR = 5
+    GONDOLA = 6
+    FUNICULAR = 7
+    UNKNOWN = 99
 
-    def __init__(self, trip_id, connections):
+
+class Trip:
+    __slots__ = ["id", "connections", "trip_type"]
+
+    def __init__(self, trip_id, connections, trip_type=TripType.UNKNOWN):
         self.id = trip_id
         for i in range(len(connections) - 1):
             act_con = connections[i]
@@ -260,11 +273,13 @@ class Trip:
                 raise ValueError(
                     "arr_time of connection {} is > than dep_time of next connection {}".format(act_con, next_con))
         self.connections = connections
+        self.trip_type = trip_type
 
     def __str__(self):
-        return ("[id={}, first_stop_id={}, last_stop_id={}, dep_in_first_stop={}, "
+        return ("[id={}, trip_type={}, first_stop_id={}, last_stop_id={}, dep_in_first_stop={}, "
                 "arr_in_last_stop={}, #connections={}]").format(
             self.id,
+            self.trip_type,
             self.connections[0].from_stop_id if self.connections else "",
             self.connections[-1].to_stop_id if self.connections else "",
             seconds_to_hhmmss(self.connections[0].dep_time) if self.connections else "",

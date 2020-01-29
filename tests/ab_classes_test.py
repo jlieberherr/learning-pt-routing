@@ -3,7 +3,7 @@
 
 import pytest
 
-from scripts.classes import Connection, Footpath, Stop, Trip, JourneyLeg, Journey
+from scripts.classes import Connection, Footpath, Stop, Trip, JourneyLeg, Journey, TripType
 
 
 def test_stop_constructor():
@@ -43,11 +43,12 @@ def test_trip_constructor_basic():
         Connection(trip_id, "s2", "s3", 72, 80),
         Connection(trip_id, "s3", "s4", 82, 90),
     ]
-    a_trip = Trip(trip_id, connections)
+    a_trip = Trip(trip_id, connections, trip_type=TripType(3))
     assert trip_id == a_trip.id
     assert 3 == len(a_trip.connections)
     assert "s2" == a_trip.connections[1].from_stop_id
     assert 90 == a_trip.connections[2].arr_time
+    assert TripType.BUS == a_trip.trip_type
 
 
 def test_trip_constructor_not_time_consistent():

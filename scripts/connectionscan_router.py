@@ -284,11 +284,11 @@ class ConnectionScanCore:
 
         start_index = binary_search(self.connection_scan_data.sorted_connections,
                                     desired_dep_time,
-                                    lambda c: c.dep_time) # optimization 1: starting criterion
+                                    lambda c: c.dep_time)  # optimization 1: starting criterion
         for con_index in range(start_index, len(self.connection_scan_data.sorted_connections)):
             con = self.connection_scan_data.sorted_connections[con_index]
 
-            if earliest_arrival_at_target > con.dep_time: # optimization 2: stopping criterion
+            if earliest_arrival_at_target > con.dep_time:  # optimization 2: stopping criterion
                 in_connection = in_connection_per_trip_id.get(con.trip_id, None)
                 if (in_connection is not None or
                         earliest_arrival_including_transfer_time_per_stop_id.get(

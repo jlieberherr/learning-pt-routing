@@ -6,7 +6,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from scripts.classes import Stop, Footpath
+from scripts.classes import Stop, Footpath, TripType
 from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
                                  parse_gtfs,
@@ -56,7 +56,7 @@ def test_gtfs_parser():
 
     # trips
     def check_trip(trip_id, exp_nb_connections, exp_first_stop_id, exp_last_stop_id, exp_dep_first_stop,
-                   exp_arr_last_stop):
+                   exp_arr_last_stop, exp_trip_type=None):
         trip = cs_data.trips_per_id[trip_id]
         assert exp_nb_connections == len(trip.connections)
         first_con = trip.connections[0]
@@ -65,9 +65,11 @@ def test_gtfs_parser():
         assert exp_last_stop_id == last_con.to_stop_id
         assert hhmmss_to_sec(exp_dep_first_stop) == first_con.dep_time
         assert hhmmss_to_sec(exp_arr_last_stop) == last_con.arr_time
+        if exp_trip_type is not None:
+            assert exp_trip_type == trip.trip_type
 
     check_trip("2.TA.1-85-j19-1.1.H", 16, "8572668", "8572648", "06:01:00", "06:23:00")
-    check_trip("1.TA.1-85-j19-1.1.H", 16, "8572668", "8572648", "05:31:00", "05:53:00")
+    check_trip("1.TA.1-85-j19-1.1.H", 16, "8572668", "8572648", "05:31:00", "05:53:00", exp_trip_type=TripType.UNKNOWN)
 
     def check_connection_on_trip(trip_id, connection_index, exp_from_stop_id, exp_to_stop_id, exp_dep_time_hhmmss,
                                  exp_arr_time_hhmmss):
@@ -106,7 +108,7 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         assert not service_available_at_date_per_service_id["TA+b03ur"]  # removed by calendar_dates.txt
 
         # trips.txt
-        trip_available_at_date_per_trip_id = \
+        trip_available_at_date_per_trip_id, route_id_per_trip_id = \
             get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id)
         assert 2272 == len(trip_available_at_date_per_trip_id)
         assert trip_available_at_date_per_trip_id["1.TA.1-85-j19-1.1.H"]
@@ -116,6 +118,11 @@ def test_get_service_available_at_date_per_service_id_get_trip_available_at_date
         assert trip_available_at_date_per_trip_id["18.TA.6-1-j19-1.17.H"]
         assert not trip_available_at_date_per_trip_id["41.TA.6-1-j19-1.37.R"]
         assert not trip_available_at_date_per_trip_id["3.TA.90-73-Y-j19-1.2.H"]
+
+        assert 2272 == len(route_id_per_trip_id)
+        assert "1-85-j19-1" == route_id_per_trip_id["2.TA.1-85-j19-1.1.H"]
+        assert "26-759-j19-1" == route_id_per_trip_id["6.TA.26-759-j19-1.1.R"]
+        assert "6-1-j19-1" == route_id_per_trip_id["41.TA.6-1-j19-1.37.R"]
 
 
 def test_create_beeline_footpaths():

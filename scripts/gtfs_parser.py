@@ -10,7 +10,7 @@ import math
 from pyproj import Transformer
 from scipy import spatial
 
-from scripts.classes import Connection, Footpath, Stop, Trip
+from scripts.classes import Connection, Footpath, Stop, Trip, TripType
 from scripts.connectionscan_router import ConnectionScanData
 from scripts.helpers.funs import hhmmss_to_sec, parse_yymmdd
 from scripts.helpers.my_logging import log_end, log_start
@@ -130,13 +130,26 @@ def parse_gtfs(
         log_end()
 
         log_start("parsing trips.txt", log)
-        trip_available_at_date_per_trip_id = \
+        trip_available_at_date_per_trip_id, route_id_per_trip_id = \
             get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id)
         if len(trip_available_at_date_per_trip_id):
             msg = "# trips available at {}: {}".format(desired_date, len(trip_available_at_date_per_trip_id))
         else:
             msg = "no trips available at {}. assure that the date is within the timetable period.".format(desired_date)
         log_end(additional_message=msg)
+
+        log_start("parsing routes.txt and assigning route_type to trip_id", log)
+        with zip_file.open("routes.txt", "r") as gtfs_file:  # required
+            reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
+            header = next(reader)
+            route_id_index = header.index("route_id")  # required
+            route_type_index = header.index("route_type")  # required
+            route_type_per_route_id = {}
+            for row in reader:
+                route_type_per_route_id[row[route_id_index]] = int(row[route_type_index])
+        route_type_per_trip_id = {trip_id: route_type_per_route_id[route_id_per_trip_id[trip_id]]
+                                  for trip_id in route_id_per_trip_id}
+        log_end()
 
         log_start("parsing stop_times.txt", log)
         with zip_file.open("stop_times.txt", "r") as gtfs_file:  # required
@@ -166,7 +179,12 @@ def parse_gtfs(
                                     hhmmss_to_sec(con_arr))]
                             else:
                                 return  # we do not want trips with missing times
-                        trips_per_id[trip_id] = Trip(trip_id, connections)
+
+                        try:
+                            trip_type = TripType(route_type_per_trip_id[trip_id])
+                        except ValueError:
+                            trip_type = TripType.UNKNOWN
+                        trips_per_id[trip_id] = Trip(trip_id, connections, trip_type)
 
             last_trip_id = None
             row_list = []
@@ -226,15 +244,19 @@ def get_service_available_at_date_per_service_id(zip_file, desired_date):
 
 def get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id):
     trip_available_at_date_per_trip_id = {}
+    route_id_per_trip_id = {}
     with zip_file.open("trips.txt", "r") as gtfs_file:  # required
         reader = csv.reader(TextIOWrapper(gtfs_file, ENCODING))
         header = next(reader)
         trip_id_index = header.index("trip_id")  # required
         service_id_index = header.index("service_id")  # required
+        route_id_index = header.index("route_id")  # required
         for row in reader:
-            trip_available_at_date_per_trip_id[row[trip_id_index]] = service_available_at_date_per_service_id[
+            trip_id = row[trip_id_index]
+            trip_available_at_date_per_trip_id[trip_id] = service_available_at_date_per_service_id[
                 row[service_id_index]]
-    return trip_available_at_date_per_trip_id
+            route_id_per_trip_id[trip_id] = row[route_id_index]
+    return trip_available_at_date_per_trip_id, route_id_per_trip_id
 
 
 def create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beeline_distance, walking_speed):
