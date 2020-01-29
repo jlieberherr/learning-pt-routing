@@ -1,11 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from datetime import date
+
 import pytest
 
 from scripts.classes import Connection, Footpath, Stop, Trip
 from scripts.connectionscan_router import ConnectionScanData
+from scripts.gtfs_parser import parse_gtfs
 from scripts.helpers.my_logging import log_end
+from tests.ba_gtfs_parser_test import PATH_GTFS_TEST_SAMPLE
 
 
 def test_connectionscan_data_constructor_basic():
@@ -41,32 +45,47 @@ def test_connectionscan_data_constructor_basic():
     assert 2 == len(cs_data.trips_per_id)
     assert [con_2_1, con_1_1, con_2_2, con_1_2] == cs_data.sorted_connections
 
+
 def test_connectionscan_data_constructor_stop_id_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s2", "", "", 0.0, 0.0)}, {}, {})
-    log_end(additional_message="test failed successfull")
+    log_end(additional_message="test failed successful")
+
 
 def test_connectionscan_data_constructor_from_stop_id_in_footpath_not_consistent():
     with pytest.raises(ValueError):
-        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)}, {("s2", "s2"): Footpath("s1", "s1", 60)}, {})
-    log_end(additional_message="test failed successfull")
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)},
+                           {("s2", "s2"): Footpath("s1", "s1", 60)}, {})
+    log_end(additional_message="test failed successful")
+
 
 def test_connectionscan_data_constructor_to_stop_id_in_footpath_not_consistent():
     with pytest.raises(ValueError):
-        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)}, {("s2", "s1"): Footpath("s2", "s2", 60)}, {})
-    log_end(additional_message="test failed successfull")
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0), "s2": Stop("s2", "", "", 0.0, 0.0)},
+                           {("s2", "s1"): Footpath("s2", "s2", 60)}, {})
+    log_end(additional_message="test failed successful")
+
 
 def test_connectionscan_data_constructor_stops_in_footpath_and_stops_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {("s1", "s2"): Footpath("s1", "s2", 60)}, {})
-    log_end(additional_message="test failed successfull")
+    log_end(additional_message="test failed successful")
+
 
 def test_connectionscan_data_constructor_trip_id_not_consistent():
     with pytest.raises(ValueError):
         ConnectionScanData({}, {}, {"t1": Trip("t", [])})
-    log_end(additional_message="test failed successfull")
+    log_end(additional_message="test failed successful")
+
 
 def test_connectionscan_data_constructor_stop_ids_in_trips_not_consistent_with_stops():
     with pytest.raises(ValueError):
-        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {}, {"t": Trip("t", [Connection("t", "s1", "s2", 30, 40)])})
-    log_end(additional_message="test failed successfull")
+        ConnectionScanData({"s1": Stop("s1", "", "", 0.0, 0.0)}, {},
+                           {"t": Trip("t", [Connection("t", "s1", "s2", 30, 40)])})
+    log_end(additional_message="test failed successful")
+
+
+def test_connectionscan_data_constructor_stops_per_name():
+    cs_data = parse_gtfs(PATH_GTFS_TEST_SAMPLE, date(2019, 1, 18))
+    assert "8507000P" == cs_data.stops_per_name["Bern"].id
+    assert "8502886" == cs_data.stops_per_name["Kirchleerau-Moosleerau, Post"].id

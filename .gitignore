@@ -1,6 +1,10 @@
 .vscode/
 *.pyc
 */__pycache__/
-tests/output
-output
+tests/output/
+output/
 notebooks/.ipynb_checkpoints
+.cache/
+.idea/
+.ipynb_checkpoints/
+.pytest_cache
