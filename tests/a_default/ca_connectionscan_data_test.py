@@ -9,7 +9,7 @@ from scripts.classes import Connection, Footpath, Stop, Trip
 from scripts.connectionscan_router import ConnectionScanData
 from scripts.gtfs_parser import parse_gtfs
 from scripts.helpers.my_logging import log_end
-from tests.ba_gtfs_parser_test import PATH_GTFS_TEST_SAMPLE
+from tests.a_default.ba_gtfs_parser_test import PATH_GTFS_TEST_SAMPLE
 
 
 def test_connectionscan_data_constructor_basic():

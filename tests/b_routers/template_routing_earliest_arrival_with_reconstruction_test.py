@@ -1,15 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from enum import Enum
 
 from scripts.connectionscan_router import ConnectionScanCore
 from scripts.helpers.funs import hhmmss_to_sec, seconds_to_hhmmss
-from tests.cb_connectionscan_core_test import (
+from tests.a_default.cb_connectionscan_core_test import (
     basel_sbb, bern, bern_bahnhof, bern_duebystrasse, chur,
     create_test_connectionscan_data, ostermundigen_bahnhof, samedan,
     samedan_bahnhof, samedan_spital, st_gallen, zuerich_hb)
 
 
+class RouterWithReconstructionType(Enum):
+    UNOPTIMIZED_EARLIEST_ARRIVAL_WITH_RECONSTRUCTION = 0
+    OPTIMIZED_EARLIEST_ARRIVAL_WITH_RECONSTRUCTION = 1
+
+
 def run_router_with_reconstruction_test(
+        router_type,
         from_stop,
         to_stop,
         des_dep_time_hhmmss,
@@ -23,21 +30,27 @@ def run_router_with_reconstruction_test(
         exp_pt_out_stops):
     cs_data = create_test_connectionscan_data()
     cs_core = ConnectionScanCore(cs_data)
-    for router in [cs_core.route_earliest_arrival_with_reconstruction,
-                   cs_core.route_optimized_earliest_arrival_with_reconstruction]:
-        journey = router(from_stop.id, to_stop.id, hhmmss_to_sec(des_dep_time_hhmmss))
-        assert exp_nb_legs == journey.get_nb_journey_legs()
-        assert exp_nb_pt_legs == journey.get_nb_pt_journey_legs()
-        assert (exp_first_stop.id if exp_first_stop is not None else None) == journey.get_first_stop_id()
-        assert (exp_last_stop.id if exp_last_stop is not None else None) == journey.get_last_stop_id()
-        assert (exp_dep_time_hhmmss if exp_dep_time_hhmmss else None) == seconds_to_hhmmss(journey.get_dep_time())
-        assert (exp_arr_time_hhmmss if exp_arr_time_hhmmss else None) == seconds_to_hhmmss(journey.get_arr_time())
-        assert [s.id for s in exp_pt_in_stops] == journey.get_pt_in_stop_ids()
-        assert [s.id for s in exp_pt_out_stops] == journey.get_pt_out_stop_ids()
+    router = None
+    if router_type == RouterWithReconstructionType.UNOPTIMIZED_EARLIEST_ARRIVAL_WITH_RECONSTRUCTION:
+        router = cs_core.route_earliest_arrival_with_reconstruction
+    elif router_type == RouterWithReconstructionType.OPTIMIZED_EARLIEST_ARRIVAL_WITH_RECONSTRUCTION:
+        router = cs_core.route_optimized_earliest_arrival_with_reconstruction
+    else:
+        ValueError("router not known")
+    journey = router(from_stop.id, to_stop.id, hhmmss_to_sec(des_dep_time_hhmmss))
+    assert exp_nb_legs == journey.get_nb_journey_legs()
+    assert exp_nb_pt_legs == journey.get_nb_pt_journey_legs()
+    assert (exp_first_stop.id if exp_first_stop is not None else None) == journey.get_first_stop_id()
+    assert (exp_last_stop.id if exp_last_stop is not None else None) == journey.get_last_stop_id()
+    assert (exp_dep_time_hhmmss if exp_dep_time_hhmmss else None) == seconds_to_hhmmss(journey.get_dep_time())
+    assert (exp_arr_time_hhmmss if exp_arr_time_hhmmss else None) == seconds_to_hhmmss(journey.get_arr_time())
+    assert [s.id for s in exp_pt_in_stops] == journey.get_pt_in_stop_ids()
+    assert [s.id for s in exp_pt_out_stops] == journey.get_pt_out_stop_ids()
 
 
-def test_earliest_arrival_with_reconstruction_bern_zuerich_hb():
+def run_tests(router_type):
     run_router_with_reconstruction_test(
+        router_type,
         bern,
         zuerich_hb,
         "08:02:00",
@@ -51,9 +64,8 @@ def test_earliest_arrival_with_reconstruction_bern_zuerich_hb():
         [zuerich_hb]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_samedan():
     run_router_with_reconstruction_test(
+        router_type,
         bern,
         samedan,
         "08:30:00",
@@ -67,9 +79,8 @@ def test_earliest_arrival_with_reconstruction_bern_samedan():
         [zuerich_hb, chur, samedan]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_samedan_spital():
     run_router_with_reconstruction_test(
+        router_type,
         bern,
         samedan_spital,
         "07:30:00",
@@ -83,9 +94,8 @@ def test_earliest_arrival_with_reconstruction_bern_samedan_spital():
         [zuerich_hb, chur, samedan, samedan_spital]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_duebystrasse_samedan():
     run_router_with_reconstruction_test(
+        router_type,
         bern_duebystrasse,
         samedan,
         "07:30:00",
@@ -99,9 +109,8 @@ def test_earliest_arrival_with_reconstruction_bern_duebystrasse_samedan():
         [bern_bahnhof, zuerich_hb, chur, samedan]
     )
 
-
-def test_earliest_arrival_with_reconstruction_basel_st_gallen():
     run_router_with_reconstruction_test(
+        router_type,
         basel_sbb,
         st_gallen,
         "07:30:00",
@@ -115,9 +124,8 @@ def test_earliest_arrival_with_reconstruction_basel_st_gallen():
         [zuerich_hb, st_gallen]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_duebystrasse_ostermundigen():
     run_router_with_reconstruction_test(
+        router_type,
         bern_duebystrasse,
         ostermundigen_bahnhof,
         "12:09:46",
@@ -131,9 +139,8 @@ def test_earliest_arrival_with_reconstruction_bern_duebystrasse_ostermundigen():
         [ostermundigen_bahnhof]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_bern():
     run_router_with_reconstruction_test(
+        router_type,
         bern,
         bern,
         "12:09:46",
@@ -147,9 +154,8 @@ def test_earliest_arrival_with_reconstruction_bern_bern():
         []
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_bern_bahnhof():
     run_router_with_reconstruction_test(
+        router_type,
         bern,
         bern_bahnhof,
         "12:09:46",
@@ -163,9 +169,8 @@ def test_earliest_arrival_with_reconstruction_bern_bern_bahnhof():
         []
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_bahnhof_samedan():
     run_router_with_reconstruction_test(
+        router_type,
         bern_bahnhof,
         samedan,
         "08:26:00",
@@ -179,9 +184,8 @@ def test_earliest_arrival_with_reconstruction_bern_bahnhof_samedan():
         [zuerich_hb, chur, samedan]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_samedan_bahnhof():
     run_router_with_reconstruction_test(
+        router_type,
         bern,
         samedan_bahnhof,
         "08:30:00",
@@ -195,9 +199,8 @@ def test_earliest_arrival_with_reconstruction_bern_samedan_bahnhof():
         [zuerich_hb, chur, samedan]
     )
 
-
-def test_earliest_arrival_with_reconstruction_bern_bahnhof_samedan_bahnhof():
     run_router_with_reconstruction_test(
+        router_type,
         bern_bahnhof,
         samedan_bahnhof,
         "08:26:00",

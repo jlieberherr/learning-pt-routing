@@ -3,9 +3,9 @@
 
 from scripts.connectionscan_router import ConnectionScanCore
 from scripts.helpers.funs import seconds_to_hhmmss, hhmmss_to_sec
-from tests.cb_connectionscan_core_test import (bern, zuerich_hb, samedan, samedan_spital, bern_duebystrasse, basel_sbb,
-                                               st_gallen, ostermundigen_bahnhof, bern_bahnhof)
-from tests.cb_connectionscan_core_test import create_test_connectionscan_data
+from tests.a_default.cb_connectionscan_core_test import (bern, zuerich_hb, samedan, samedan_spital, bern_duebystrasse, basel_sbb,
+                                                         st_gallen, ostermundigen_bahnhof, bern_bahnhof)
+from tests.a_default.cb_connectionscan_core_test import create_test_connectionscan_data
 
 
 def test_unoptimized_earliest_arrival_bern_zuerich_hb():
