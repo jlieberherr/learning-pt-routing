@@ -6,6 +6,9 @@ from scripts.helpers.funs import seconds_to_hhmmss
 
 
 class Stop:
+    """
+    represents a stop where passenger can board and alight from trip
+    """
     __slots__ = ["id", "code", "name", "easting", "northing", "is_station", "parent_station_id"]
 
     def __init__(self, stop_id, code, name, easting, northing, is_station=False, parent_station_id=None):
