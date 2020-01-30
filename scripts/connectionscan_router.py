@@ -13,6 +13,10 @@ log = logging.getLogger(__name__)
 
 
 class ConnectionScanData:
+    """
+    container for all timetable data.
+    structured so that you can use it directly in the core routing algorithm.
+    """
     def __init__(self, stops_per_id, footpaths_per_from_to_stop_id, trips_per_id):
         log_start("creating ConnectionScanData", log)
         # stops
@@ -78,6 +82,9 @@ class ConnectionScanData:
 
 
 class ConnectionScanCore:
+    """
+    core container, in which you implement the routing algorithm (task 1, 2 and 3)
+    """
     def __init__(self, connection_scan_data):
         log_start("creating ConnectionScanData", log)
         # static per ConnectionScanCore
@@ -132,6 +139,9 @@ class ConnectionScanCore:
             seconds_to_hhmmss(desired_dep_time)), log)
 
         # TODO implement task 1 here
+        # some hints for your implementation:
+        # - use the data structures prepared in scripts.classes and ConnectionScanData
+        # - TODO
 
         res = None
         log_end(additional_message="earliest arrival time: {}".format(seconds_to_hhmmss(res) if res else res))
