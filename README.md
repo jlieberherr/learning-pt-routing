@@ -57,14 +57,14 @@ IDE (i.e. [Visual Studio Code](https://code.visualstudio.com/) or
    - Implement the three tasks in ```scripts.connectionscan_router.ConnectionScanCore```. 
    You can test your implementation per task with ```pytest tests/task_1```, ```pytest tests/task_2``` and
     ```pytest tests/task_3``` or all tests together with ```pytest```.
-    - If all tests are green:
-       - Choose a [gtfs](https://developers.google.com/transit/gtfs/reference) feed from your preferred country or city, 
-       for example from [transitfeeds.com](https://transitfeeds.com/)
-       - Start Jupyter Lab from the development folder (the virtual environment must be activated) with ```jupyter lab```
-       - Make a copy of the Jupyter notebook ```notebooks/route_on_real_world_gtfs.ipynb```
-       - Link the chosen gtfs-feed in the notebook, parse it into a ```ConnectionScanCore``` object
-       and run your implementation of the Connection Scan Algorithm on your preferred source-target-stop-relations. Are
-       the results as expected? Does the optimization in task 3 improve the runtime?
+* Apply your implementation of the Connection Scan Algorithm on real world public transport networks:
+   - Choose a [gtfs](https://developers.google.com/transit/gtfs/reference) feed from your preferred country or city, 
+   for example from [transitfeeds.com](https://transitfeeds.com/)
+   - Start Jupyter Lab from the development folder (the virtual environment must be activated) with ```jupyter lab```
+   - Make a copy of the Jupyter notebook ```notebooks/route_on_real_world_gtfs.ipynb```
+   - Link the chosen gtfs-feed in the notebook, parse it into a ```ConnectionScanCore``` object
+   and run your implementation of the Connection Scan Algorithm on your preferred source-target-stop-relations. Are
+   the results as expected? Does the optimization in task 3 improve the runtime?
 
 ## Prerequisites
 To successfully complete the tasks you need some experience with algorithms and a solid 
