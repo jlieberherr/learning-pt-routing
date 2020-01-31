@@ -43,26 +43,26 @@ IDE (i.e. [Visual Studio Code](https://code.visualstudio.com/) or
    - Create the virtual environment with ```py -m venv YOUR_NAME_OF_THE_VENV```
    - Activate the virtual environment with ```YOUR_NAME_OF_THE_VENV/Scripts/activate``` 
 (depending on the platform this might be slightly different)
-   - Assure that the virtual environment is running with the correct Python interpreter.
+   - Assure that the virtual environment is running with the correct Python interpreter
 * Install the project:
    - Navigate to the folder for development
-   - Download the project with ```git clone https://github.com/jlieberherr/learning-pt-routing.git```
+   - Clone the project with ```git clone https://github.com/jlieberherr/learning-pt-routing.git```
    - Install the necessary python packages 
-(the virtual environment must be activated): ```pip install -r requirements.txt```
+(the virtual environment must be activated) with ```pip install -r requirements.txt```
    - Run the default tests in the ```master``` branch: ```pytest tests/a_default```. 
-   If you run all tests (with ```pytest```) the ones in ```b_router``` will fail. Your task is to make them green.
+   If you run all tests (with ```pytest```) all tests in ```tests/b_router``` will fail. Your task is to make them green.
 * Create your branch and start coding:
    - If the default tests are green create your new branch: ```git branch NAME_OF_YOUR_NEW_BRANCH```
    - Checkout your new branch ```git checkout NAME_OF_YOUR_NEW_BRANCH```
    - Implement the three tasks in ```scripts.connectionscan_router.ConnectionScanCore```. 
-   You can test your implementation per task with ```git pytest tests/task_1```, ```git pytest tests/task_2``` and
-    ```git pytest tests/task_3``` or all together with ```git pytest```
+   You can test your implementation per task with ```pytest tests/task_1```, ```pytest tests/task_2``` and
+    ```pytest tests/task_3``` or all tests together with ```pytest```.
     - If all tests are green:
-       - choose a [gtfs](https://developers.google.com/transit/gtfs/reference) feed from your preferred country or city, 
+       - Choose a [gtfs](https://developers.google.com/transit/gtfs/reference) feed from your preferred country or city, 
        for example from [transitfeeds.com](https://transitfeeds.com/)
-       - start Jupyter Lab from the development folder (the virtual environment must be activated):```jupyter lab```
-       - make a copy of the Jupyter notebook ```notebooks/route_on_real_world_gtfs.ipynb```
-       - link the chosen gtfs-feed in the notebook, parse it to a ```ConnectionScanCore``` object
+       - Start Jupyter Lab from the development folder (the virtual environment must be activated) with ```jupyter lab```
+       - Make a copy of the Jupyter notebook ```notebooks/route_on_real_world_gtfs.ipynb```
+       - Link the chosen gtfs-feed in the notebook, parse it into a ```ConnectionScanCore``` object
        and run your implementation of the Connection Scan Algorithm on your preferred source-target-stop-relations. Are
        the results as expected? Does the optimization in task 3 improve the runtime?
 
