@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+"""This module provides a parser for gtfs data."""
 import csv
 import logging
 from io import TextIOWrapper
@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def get_index_with_default(header, column_name, default_value=None):
+    """Helper function to extract the index of a column."""
     return header.index(column_name) if column_name in header else default_value
 
 
@@ -28,9 +29,27 @@ def parse_gtfs(
         path_to_gtfs_zip,
         desired_date,
         add_beeline_footpaths=True,
-        beeline_distance=100.0,  # in meters
-        walking_speed=2.0 / 3.6  # meters per second
+        beeline_distance=100.0,
+        walking_speed=2.0 / 3.6
 ):
+    """Parses a gtfs-file and returns the corresponding timetable data of a specific date.
+
+    In many GTFS files the information about the footpaths/transfers is not complete.
+    In these cases it is recommended to define appropriate footpaths within a beeline distance.
+
+    Args:
+        path_to_gtfs_zip (str): path to the gtfs-file (weblink or path to a zip-file).
+        desired_date (date): date on which the timetable data is read.
+        add_beeline_footpaths (obj:`bool`, optional): specifies whether footpaths should be created
+        depending on the beeline (air distance) and independent of the transfers.txt gtfs-file or not.
+        beeline_distance (obj:`float`, optional): radius in meter of the perimeter (circle) to create
+        the beeline footpaths (only relevant if add_beeline_footpaths is True).
+        walking_speed (obj:`float`, optional): walking speed in meters per second for calculating the walking time
+        of the created beeline footpaths (only relevant if add_beeline_footpaths is True).
+
+    Returns:
+        ConnectionScanData: timetable data of the specific date.
+    """
     log_start("parsing gtfs-file for desired date {} ({})".format(desired_date, path_to_gtfs_zip), log)
     stops_per_id = {}
     footpaths_per_from_to_stop_id = {}
@@ -205,6 +224,7 @@ def parse_gtfs(
 
 
 def get_service_available_at_date_per_service_id(zip_file, desired_date):
+    """Helper function for determining whether or not a service is available on the specified day."""
     service_available_at_date_per_service_id = {}
     with zip_file.open("calendar.txt", "r") as gtfs_file:  # conditionally required, but we assume that the file exists
         weekday_columns = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -243,6 +263,7 @@ def get_service_available_at_date_per_service_id(zip_file, desired_date):
 
 
 def get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_per_service_id):
+    """Helper function for determining whether or not a trip operates on the specified day."""
     trip_available_at_date_per_trip_id = {}
     route_id_per_trip_id = {}
     with zip_file.open("trips.txt", "r") as gtfs_file:  # required
@@ -260,10 +281,17 @@ def get_trip_available_at_date_per_trip_id(zip_file, service_available_at_date_p
 
 
 def create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beeline_distance, walking_speed):
-    """
-    adds beeline footpaths footpaths_per_from_to_stop_id from one stop to another 
-    if there is no footpath already defined and the distance between them is <= beeline_distance.
-    reason: in a lot of gtfs-files the transfers.txt data is not complete at all.
+    """Creates for every stop new footpaths to the other stops within the beeline distance
+    if they are not already defined.
+
+    The new footpaths are added to footpaths_per_from_to_stop_id.
+    The walking time of the new footpath is calculated from the beeline distance and the specific walking speed.
+
+    Args:
+        stops_per_id (dict): stops per stop id.
+        footpaths_per_from_to_stop_id (): footpaths per (from_stop_id, to_stop_id) tuple.
+        beeline_distance (float): the beeline distance in meters.
+        walking_speed (float): walking speed in meters per second.
     """
     nb_footpaths_perimeter = 0
     log_start("adding footpaths in beeline perimeter with radius {}m".format(beeline_distance), log)

@@ -1,10 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+"""This module collects some helper functions."""
 from datetime import date
 
 
 def parse_yymmdd(yymmdd_str):
+    """Parses a YYYYMMDD-string and returns the corresponding date.
+
+    Args:
+        yymmdd_str (str): YYYYMMDD-string
+
+    Returns:
+        date: the corresponding date.
+    """
     y = int(yymmdd_str[:4])
     m = int(yymmdd_str[4:6])
     d = int(yymmdd_str[6:8])
@@ -12,11 +20,27 @@ def parse_yymmdd(yymmdd_str):
 
 
 def hhmmss_to_sec(hhmmss):
+    """Parses a HH:MM:SS-string and returns the corresponding number of seconds after midnight.
+
+    Args:
+        hhmmss (str): HH:MM:SS-string
+
+    Returns:
+        int: number of seconds after midnight.
+    """
     h, m, s = hhmmss.split(':')
     return int(h) * 3600 + int(m) * 60 + int(s)
 
 
 def seconds_to_hhmmssms(seconds):
+    """Parses the number of seconds after midnight and returns the corresponding HH:MM:SS.f-string.
+
+    Args:
+        seconds (float): number of seconds after midnight.
+
+    Returns:
+        str: the corresponding HH:MM:SS.f-string.
+    """
     int_seconds = int(seconds)
     ms = round((seconds - int_seconds) * 1000)
     m, s = divmod(int_seconds, 60)
@@ -25,6 +49,14 @@ def seconds_to_hhmmssms(seconds):
 
 
 def seconds_to_hhmmss(seconds):
+    """Parses the number of seconds after midnight and returns the corresponding HH:MM:SS-string.
+
+    Args:
+        seconds (int): number of seconds after midnight.
+
+    Returns:
+        str: the corresponding HH:MM:SS-string.
+    """
     if seconds is None:
         return None
     int_seconds = int(seconds)
@@ -34,15 +66,23 @@ def seconds_to_hhmmss(seconds):
 
 
 def binary_search(sorted_list, value, value_picker):
-    """
-    executes a binary search on sorted_list.
-    returns the index of the first element in sorted_list which is <= value 
+    """Executes a binary search on a sorted list.
+    Returns the index ind of the first element in the list whose value is <= than the given value.
     or None if this element does not exist.
     value_picker defines the value of the elements in sorted_list.
+
+    Args:
+        sorted_list (list): sorted list.
+        value (int, float): value.
+        value_picker (function): function that assigns the value relevant for sorting to the elements of the list.
+
+    Returns:
+        int: index ind of the first element in the list with value_picker(sorted_list[ind]) <= value.
     """
     n = len(sorted_list)
 
     def binary_search_recursive(from_index, to_index):
+        """helper function for binary search."""
         if from_index > to_index or from_index >= n or to_index < 0:
             return None
         mid = (from_index + to_index) // 2

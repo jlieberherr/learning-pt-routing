@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Tests for unoptimized earliest arrival routing with reconstruction (task 2)."""
 from scripts.connectionscan_router import ConnectionScanCore
 from scripts.helpers.funs import seconds_to_hhmmss
 from tests.a_default.cb_connectionscan_core_test import create_test_connectionscan_data, bern_bahnhof, samedan_bahnhof, \
