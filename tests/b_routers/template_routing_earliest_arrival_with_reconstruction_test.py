@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Helper module with the definition of the tests for (un)optimized earliest arrival routing with reconstruction."""
 from enum import Enum
 
 from scripts.connectionscan_router import ConnectionScanCore

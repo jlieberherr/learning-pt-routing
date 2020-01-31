@@ -1,22 +1,34 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+"""This module defines the core data structures for the implementation of the connection scan algorithm."""
 import logging
 from collections import defaultdict
 
 from scripts.classes import Journey
-from scripts.helpers.funs import (hhmmss_to_sec,
-                                  seconds_to_hhmmss)
+from scripts.helpers.funs import (hhmmss_to_sec, seconds_to_hhmmss)
 from scripts.helpers.my_logging import log_end, log_start
 
 log = logging.getLogger(__name__)
 
 
 class ConnectionScanData:
+    """Container for all timetable data.
+    Designed so that the data can be used directly in the connection scan algorithm.
+
+    Note that during the creation of an object various consistency checks are performed.
+    For example all stop id's occurring in footpaths or connections of trips must also occur in stops_per_id.
+
+    Args and attributes:
+        stops_per_id (dict): stop per stop id.
+        footpaths_per_from_to_stop_id (dict): footpath per (from_stop_id, to_stop_id)-tuple.
+        trips_per_id (dict): trip per trip id.
+
+    Additional attributes:
+        stops_per_name (dict): stop per stop name. If the name is not unique, the name is assigned the best fitting stop
+        according to the following logic: (1. stop which is a station, 2. stop which has the shortest id).
+        sorted_connections (list): connections in the timetable sorted by departure time in the from stop.
     """
-    container for all timetable data.
-    structured so that you can use it directly in the core routing algorithm.
-    """
+
     def __init__(self, stops_per_id, footpaths_per_from_to_stop_id, trips_per_id):
         log_start("creating ConnectionScanData", log)
         # stops
@@ -29,6 +41,7 @@ class ConnectionScanData:
             stop_list_per_name[a_stop.name] += [a_stop]
 
         def choose_best_stop(stops_with_same_name):
+            """Helper function for chosen the best fitting stop per stop name"""
             stops_with_same_name_sorted = sorted(stops_with_same_name,
                                                  key=lambda s: (0 if s.is_station else 1, len(s.id)))
             return stops_with_same_name_sorted[0]
@@ -82,9 +95,19 @@ class ConnectionScanData:
 
 
 class ConnectionScanCore:
+    """Container for the routing instance.
+
+    Note that connection_scan_data.sorted_connections is a list and not an specific typed array.
+    The performance when iterating over this list is therefore not optimal.
+
+    Args and attributes:
+        connection_scan_data (ConnectionScanData): timetable data belong to this routing instance.
+
+    Additional attributes:
+        stops_per_name (dict): stop per stop name. If the name is not unique, the name is assigned the best fitting stop
+        according to the following logic: (1. stop which is a station, 2. stop which has the shortest id).
     """
-    core container, in which you implement the routing algorithm (task 1, 2 and 3)
-    """
+
     def __init__(self, connection_scan_data):
         log_start("creating ConnectionScanData", log)
         # static per ConnectionScanCore
@@ -95,7 +118,134 @@ class ConnectionScanCore:
             self.outgoing_footpaths_per_stop_id[footpath.from_stop_id] += [footpath]
         log_end()
 
+    def route_earliest_arrival(self, from_stop_id, to_stop_id, desired_dep_time):
+        """Executes the unoptimized earliest arrival version (figure 3 of https://arxiv.org/pdf/1703.05997.pdf) of the
+        connection scan algorithm from the source to the target stop respecting the desired departure time.
+
+        Note:
+            - In order to correctly model the footpaths at the start and end of the journey,
+            the algorithm from the pseudo code is slightly modified.
+            - the data structures are not optimized for performance.
+
+        Args:
+            from_stop_id (str): id of the source stop.
+            to_stop_id (str): id of the target stop.
+            desired_dep_time (int): desired departure time in seconds after midnight.
+
+        Returns:
+            int: earliest possible arrival time at the target stop.
+        """
+
+        log_start("unoptimized earliest arrival routing from {} to {} at {}".format(
+            self.connection_scan_data.stops_per_id[from_stop_id].name,
+            self.connection_scan_data.stops_per_id[to_stop_id].name,
+            seconds_to_hhmmss(desired_dep_time)), log)
+
+        # TODO implement task 1 here
+        # Some hints:
+        # - First get familiar with the data structures from the classes module and the ConnectionScanData class
+        # - In order to correctly model the footpaths at the start and end of the journey,
+        #   the algorithm from the pseudo code must be slightly modified.
+        # - You could use the following dynamic data structures:
+        #    - a dict for the earliest arrival including transfer/walking times per stop.
+        #    - a int for the earliest arrival time at the target stop.
+        #    - a dict to mark if a trip is set or not.
+
+        res = -1
+        log_end(additional_message="earliest arrival time: {}".format(seconds_to_hhmmss(res) if res else res))
+        return res
+
+    def route_earliest_arrival_with_reconstruction(self, from_stop_id, to_stop_id, desired_dep_time):
+        """Executes the unoptimized earliest arrival with reconstruction version
+        (figure 6 of https://arxiv.org/pdf/1703.05997.pdf) of the
+        connection scan algorithm from the source to the target stop respecting the desired departure time.
+
+        Note:
+            - In order to correctly model the footpaths at the start and end of the journey,
+            the algorithm from the pseudo code is slightly modified.
+            - the data structures are not optimized for performance.
+
+        Args:
+            from_stop_id (str): id of the source stop.
+            to_stop_id (str): id of the target stop.
+            desired_dep_time (int): desired departure time in seconds after midnight.
+
+        Returns:
+            Journey: a Journey with earliest possible arrival time from the source to the target stop.
+        """
+        log_start("unoptimized earliest arrival routing with journey reconstruction from {} to {} at {}".format(
+            self.connection_scan_data.stops_per_id[from_stop_id].name,
+            self.connection_scan_data.stops_per_id[to_stop_id].name,
+            seconds_to_hhmmss(desired_dep_time)), log)
+
+        # TODO implement task 2 here
+        # Some hints:
+        # - Implement task 1 first.
+        # - In order to correctly model the footpaths at the start and end of the journey,
+        #   the algorithm from the pseudo code must be slightly modified.
+        # - You could use the following dynamic data structures:
+        #    - a dict for the earliest arrival including transfer/walking times per stop.
+        #    - a int for the earliest arrival time at the target stop.
+        #    - a dict for the in/boarding connection per trip.
+        #    - a JourneyLeg for the last journey leg at the target stop.
+        # - Construct the resulting Journey with the reconstruction logic from the pseudo code.
+
+        res = Journey()
+        log_end(additional_message="# journey legs: {}".format(0 if res is None else res.get_nb_journey_legs()))
+        return res
+
+    def route_optimized_earliest_arrival_with_reconstruction(self, from_stop_id, to_stop_id, desired_dep_time):
+        """Executes the optimized earliest arrival with reconstruction version
+        (figure 4 and 6 of https://arxiv.org/pdf/1703.05997.pdf) of the
+        connection scan algorithm from the source to the target stop respecting the desired departure time.
+
+        Note:
+            - In order to correctly model the footpaths at the start and end of the journey,
+            the algorithm from the pseudo code is slightly modified.
+            - the data structures are not optimized for performance.
+
+        Args:
+            from_stop_id (str): id of the source stop.
+            to_stop_id (str): id of the target stop.
+            desired_dep_time (int): desired departure time in seconds after midnight.
+
+        Returns:
+            Journey: a Journey with earliest possible arrival time from the source to the target stop.
+        """
+        log_start("optimized earliest arrival routing with journey reconstruction from {} to {} at {}".format(
+            self.connection_scan_data.stops_per_id[from_stop_id].name,
+            self.connection_scan_data.stops_per_id[to_stop_id].name,
+            seconds_to_hhmmss(desired_dep_time)), log)
+
+        # TODO implement task 3 here
+        # Some hints:
+        # - Implement task 2 first.
+        # - In order to correctly model the footpaths at the start and end of the journey,
+        #   the algorithm from the pseudo code must be slightly modified.
+        # - You could use the same dynamic data structures and reconstruction logic as in task 2.
+        # - Implement the three optimization criterion's described in the paper (on page 8):
+        #   stopping criterion, starting criterion and limited walking.
+        #   For the starting criterion you can use the function binary_search from the funs module.
+
+        res = Journey()
+        log_end(additional_message="# journey legs: {}".format(0 if res is None else res.get_nb_journey_legs()))
+        return res
+
     def route_by_name(self, from_stop_name, to_stop_name, desired_dep_time_hhmmss, router):
+        """Wrapper function to execute routing requests based on the name of the source and target stop.
+
+        Chooses the best fitting id for the source and target stop and forwards the routing request
+        to the specified router.
+
+        Args:
+            from_stop_name (str): name of the source stop.
+            to_stop_name (str): name of the target stop.
+            desired_dep_time_hhmmss (str): time in format HH:MM:SS.
+            router (Function): router to be called.
+
+        Returns:
+            The result of the request to the specified router.
+        """
         return router(
             self.connection_scan_data.stops_per_name[from_stop_name].id,
             self.connection_scan_data.stops_per_name[to_stop_name].id,
@@ -103,6 +253,20 @@ class ConnectionScanCore:
         )
 
     def route_earliest_arrival_by_name(self, from_stop_name, to_stop_name, desired_dep_time_hhmmss):
+        """Wrapper function to execute unoptimized earliest arrival routing requests
+         based on the name of the source and target stop.
+
+        Chooses the best fitting id for the source and target stop and forwards the routing request
+        to route_earliest_arrival.
+
+        Args:
+            from_stop_name (str): name of the source stop.
+            to_stop_name (str): name of the target stop.
+            desired_dep_time_hhmmss (str): time in format HH:MM:SS.
+
+        Returns:
+            int: earliest possible arrival at the target stop.
+        """
         return self.route_by_name(
             from_stop_name,
             to_stop_name,
@@ -111,6 +275,20 @@ class ConnectionScanCore:
         )
 
     def route_earliest_arrival_with_reconstruction_by_name(self, from_stop_name, to_stop_name, desired_dep_time_hhmmss):
+        """Wrapper function to execute unoptimized earliest arrival routing with reconstruction requests
+        based on the name of the source and target stop.
+
+        Chooses the best fitting id for the source and target stop and forwards the routing request
+        to route_earliest_arrival_with_reconstruction.
+
+        Args:
+            from_stop_name (str): name of the source stop.
+            to_stop_name (str): name of the target stop.
+            desired_dep_time_hhmmss (str): time in format HH:MM:SS.
+
+        Returns:
+            Journey: a Journey with earliest possible arrival time from the source to the target stop.
+        """
         return self.route_by_name(
             from_stop_name,
             to_stop_name,
@@ -120,63 +298,23 @@ class ConnectionScanCore:
 
     def route_optimized_earliest_arrival_with_reconstruction_by_name(self, from_stop_name, to_stop_name,
                                                                      desired_dep_time_hhmmss):
+        """Wrapper function to execute optimized earliest arrival routing with reconstruction requests
+        based on the name of the source and target stop.
+
+        Chooses the best fitting id for the source and target stop and forwards the routing request
+        to route_optimized_earliest_arrival_with_reconstruction.
+
+        Args:
+            from_stop_name (str): name of the source stop.
+            to_stop_name (str): name of the target stop.
+            desired_dep_time_hhmmss (str): time in format HH:MM:SS.
+
+        Returns:
+            Journey: a Journey with earliest possible arrival time from the source to the target stop.
+        """
         return self.route_by_name(
             from_stop_name,
             to_stop_name,
             desired_dep_time_hhmmss,
             self.route_optimized_earliest_arrival_with_reconstruction
         )
-
-    def route_earliest_arrival(self, from_stop_id, to_stop_id, desired_dep_time):
-        """
-        slightly modified version of unoptimized earliest-arrival routing
-        with the connection scan algorithm presented in figure 3 of https://arxiv.org/pdf/1703.05997.pdf.
-        note that the data structures are not optimized for performance.
-        """
-        log_start("unoptimized earliest arrival routing from {} to {} at {}".format(
-            self.connection_scan_data.stops_per_id[from_stop_id].name,
-            self.connection_scan_data.stops_per_id[to_stop_id].name,
-            seconds_to_hhmmss(desired_dep_time)), log)
-
-        # TODO implement task 1 here
-        # some hints for your implementation:
-        # - use the data structures prepared in scripts.classes and ConnectionScanData
-        # - TODO
-
-        res = None
-        log_end(additional_message="earliest arrival time: {}".format(seconds_to_hhmmss(res) if res else res))
-        return res
-
-    def route_earliest_arrival_with_reconstruction(self, from_stop_id, to_stop_id, desired_dep_time):
-        """
-        slightly modified version of unoptimized earliest-arrival routing with journey reconstruction
-        with the connection scan algorithm presented in figure 6 of https://arxiv.org/pdf/1703.05997.pdf.
-        note that the data structures are not optimized for performance.
-        """
-        log_start("unoptimized earliest arrival routing with journey reconstruction from {} to {} at {}".format(
-            self.connection_scan_data.stops_per_id[from_stop_id].name,
-            self.connection_scan_data.stops_per_id[to_stop_id].name,
-            seconds_to_hhmmss(desired_dep_time)), log)
-
-        # TODO implement task 2 here
-
-        res = Journey()
-        log_end(additional_message="# journey legs: {}".format(0 if res is None else res.get_nb_journey_legs()))
-        return res
-
-    def route_optimized_earliest_arrival_with_reconstruction(self, from_stop_id, to_stop_id, desired_dep_time):
-        """
-        slightly modified version of optimized earliest-arrival routing with journey reconstruction
-        with the connection scan algorithm presented in figure 4 and 6 of https://arxiv.org/pdf/1703.05997.pdf.
-        note that the data structures are not optimized for performance.
-        """
-        log_start("optimized earliest arrival routing with journey reconstruction from {} to {} at {}".format(
-            self.connection_scan_data.stops_per_id[from_stop_id].name,
-            self.connection_scan_data.stops_per_id[to_stop_id].name,
-            seconds_to_hhmmss(desired_dep_time)), log)
-
-        # TODO implement task 3 here
-
-        res = Journey()
-        log_end(additional_message="# journey legs: {}".format(0 if res is None else res.get_nb_journey_legs()))
-        return res
