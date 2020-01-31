@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+"""Tests for unoptimized earliest arrival routing (task 1)."""
 from scripts.connectionscan_router import ConnectionScanCore
 from scripts.helpers.funs import seconds_to_hhmmss, hhmmss_to_sec
 from tests.a_default.cb_connectionscan_core_test import (bern, zuerich_hb, samedan, samedan_spital, bern_duebystrasse, basel_sbb,
