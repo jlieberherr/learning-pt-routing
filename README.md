@@ -1,5 +1,5 @@
 # learning-pt-routing
-This is an environment to learn and implement the Connection Scan Algorithm [[1]](#1).
+This is an environment to learn and implement the Connection Scan Algorithm [[1]].
 
 The project is prepared in such a way that the implementation of the core algorithm, 
 which is only a few lines long, can be started directly.
