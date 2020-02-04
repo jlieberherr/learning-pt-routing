@@ -30,37 +30,40 @@ Implement the following algorithm (figure 4 on page 8 of [[1]](#1)) in the funct
 
 ## How to proceed
 The following software should be installed on your computer:
-- [Python 3.8 (64-bit)](https://www.python.org/downloads/release/python-381/.)
+- [Python 3.7 (64-bit)](https://www.python.org/downloads/release/python-376/) 
 - [git](https://git-scm.com/downloads)
 - A powerful text editor (i.e. [Sublime Text](https://www.sublimetext.com/])) or 
 IDE (i.e. [Visual Studio Code](https://code.visualstudio.com/) or 
-[PyCharm](https://www.jetbrains.com/de-de/pycharm/)) to develop the code.
+[PyCharm](https://www.jetbrains.com/de-de/pycharm/)) for developing
 
 ### Installation
-* Choose a folder for development and a folder for the virtual environment 
+* Choose a folder where you want to place your development folder 
+and a folder where you want to place your virtual environment folder 
 * Create the virtual environment:
-   - Open a command line, navigate to the folder for the virtual environment
-   - Create the virtual environment with ```py -m venv YOUR_NAME_OF_THE_VENV```
+   - Open a command line, navigate to the folder where you want to place your virtual environment
+   - Create the virtual environment with ```path/to/your/python/3.7/installation/python.exe -m venv YOUR_NAME_OF_THE_VENV```
    - Activate the virtual environment with ```YOUR_NAME_OF_THE_VENV/Scripts/activate``` 
-(depending on the platform this might be slightly different)
-   - Assure that the virtual environment is running with the correct Python interpreter
 * Install the project:
-   - Navigate to the folder for development
+   - Navigate to the folder where you want to place the development folder
    - Clone the project with ```git clone https://github.com/jlieberherr/learning-pt-routing.git```
+   - Navigate to the now created development folder with ```cd learning-pt-routing```
    - Install the necessary python packages 
 (the virtual environment must be activated) with ```pip install -r requirements.txt```
-   - Run the default tests in the ```master``` branch: ```pytest tests/a_default```. 
+   - Run the default tests with ```pytest tests/a_default```. 
    If you run all tests (with ```pytest```) all tests in ```tests/b_router``` will fail. Your task is to make them green.
 * Create your branch and start coding:
-   - If the default tests are green create your new branch: ```git branch NAME_OF_YOUR_NEW_BRANCH```
-   - Checkout your new branch ```git checkout NAME_OF_YOUR_NEW_BRANCH```
+   - Create your new branch with ```git branch NAME_OF_YOUR_NEW_BRANCH```
+   - Checkout your new branch with ```git checkout NAME_OF_YOUR_NEW_BRANCH```
    - Implement the three tasks in ```scripts.connectionscan_router.ConnectionScanCore```. 
    You can test your implementation per task with ```pytest tests/task_1```, ```pytest tests/task_2``` and
     ```pytest tests/task_3``` or all tests together with ```pytest```.
 * Apply your implementation of the Connection Scan Algorithm on real world public transport networks:
    - Choose a [gtfs](https://developers.google.com/transit/gtfs/reference) feed from your preferred country or city, 
    for example from [transitfeeds.com](https://transitfeeds.com/)
-   - Start Jupyter Lab from the development folder (the virtual environment must be activated) with ```jupyter lab```
+   - Start Jupyter Lab from the development folder (the virtual environment must be activated) with ```jupyter lab``` 
+   (note that with Python 3.8 this may not work without workaround, 
+   see [here](https://github.com/jupyter/notebook/issues/4613) - 
+   this is why we use Python 3.7 for the project)
    - Make a copy of the Jupyter notebook ```notebooks/route_on_real_world_gtfs.ipynb```
    - Link the chosen gtfs-feed in the notebook, parse it into a ```ConnectionScanCore``` object
    and run your implementation of the Connection Scan Algorithm on your preferred source-target-stop-relations. Are
