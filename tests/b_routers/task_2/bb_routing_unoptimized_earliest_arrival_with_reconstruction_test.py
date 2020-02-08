@@ -3,10 +3,10 @@
 """Tests for unoptimized earliest arrival routing with reconstruction (task 2)."""
 from scripts.connectionscan_router import ConnectionScanCore
 from scripts.helpers.funs import seconds_to_hhmmss
-from tests.a_default.cb_connectionscan_core_test import create_test_connectionscan_data, bern_bahnhof, samedan_bahnhof, \
-    bern, zuerich_hb, chur, samedan
-from tests.b_routers.template_routing_earliest_arrival_with_reconstruction_test import RouterWithReconstructionType, \
-    run_tests
+from tests.a_default.cb_connectionscan_core_test import (create_test_connectionscan_data,
+                                                         bern_bahnhof, samedan_bahnhof, bern, zuerich_hb, chur, samedan)
+from tests.b_routers.template_routing_earliest_arrival_with_reconstruction_test import (RouterWithReconstructionType,
+                                                                                        run_tests)
 
 
 def test_unoptimized_earliest_arrival_with_reconstruction():
