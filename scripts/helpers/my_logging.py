@@ -39,15 +39,16 @@ def log_end(additional_message=None):
     log_entry.logger.info(log_message)
 
 
-def init_logging(directory, file_name):
+def init_logging(directory, file_name, log_level=logging.INFO):
     """Initializes the logger for the project.
 
     Args:
         directory (str): Path to the folder where the log file is written.
         file_name (str): Name of the log file.
+        log_level (int): log level
     """
     logger = logging.getLogger()
-    logger.level = logging.INFO
+    logger.level = log_level
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)

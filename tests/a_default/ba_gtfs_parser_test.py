@@ -11,6 +11,7 @@ from scripts.gtfs_parser import (get_service_available_at_date_per_service_id,
                                  get_trip_available_at_date_per_trip_id,
                                  parse_gtfs,
                                  create_beeline_footpaths)
+from scripts.connectionscan_router import make_transitive
 from scripts.helpers.funs import hhmmss_to_sec
 
 PATH_GTFS_TEST_SAMPLE = "tests/resources/gtfsfp20192018-12-05_small.zip"
@@ -157,3 +158,68 @@ def test_create_beeline_footpaths():
     assert (pontresina_post.id, pontresina.id) not in footpaths_per_from_to_stop_id
     assert (bern.id, bern_bahnhof.id) not in footpaths_per_from_to_stop_id
     assert (bern_bahnhof.id, bern.id) not in footpaths_per_from_to_stop_id
+
+
+def test_make_transitive_simple():
+    footpaths = [
+        Footpath("s1", "s2", 60),
+        Footpath("s2", "s3", 70),
+    ]
+
+    footpaths_per_from_to_stop_id = {(f.from_stop_id, f.to_stop_id): f for f in footpaths}
+
+    make_transitive(footpaths_per_from_to_stop_id)
+
+    assert 3 == len(footpaths_per_from_to_stop_id)
+
+    footpath_s1_s3 = footpaths_per_from_to_stop_id[("s1", "s3")]
+    assert "s1" == footpath_s1_s3.from_stop_id
+    assert "s3" == footpath_s1_s3.to_stop_id
+    assert 130 == footpath_s1_s3.walking_time
+
+
+def test_make_transitive_two_iterations():
+    footpaths = [
+        Footpath("s1", "s2", 60),
+        Footpath("s2", "s3", 70),
+        Footpath("s3", "s4", 70),
+    ]
+
+    footpaths_per_from_to_stop_id = {(f.from_stop_id, f.to_stop_id): f for f in footpaths}
+
+    make_transitive(footpaths_per_from_to_stop_id)
+
+    assert 6 == len(footpaths_per_from_to_stop_id)
+
+    assert 130 == footpaths_per_from_to_stop_id[("s1", "s3")].walking_time
+    assert 200 == footpaths_per_from_to_stop_id[("s1", "s4")].walking_time
+    assert 140 == footpaths_per_from_to_stop_id[("s2", "s4")].walking_time
+
+
+def test_make_tranksitive_change_time():
+    footpaths = [
+        Footpath("s1", "s2", 60),
+        Footpath("s2", "s3", 70),
+        Footpath("s1", "s3", 140),
+    ]
+
+    footpaths_per_from_to_stop_id = {(f.from_stop_id, f.to_stop_id): f for f in footpaths}
+
+    make_transitive(footpaths_per_from_to_stop_id)
+
+    assert 3 == len(footpaths_per_from_to_stop_id)
+    assert 130 == footpaths_per_from_to_stop_id[("s1", "s3")].walking_time
+
+
+def test_make_transitive_nothing_to_do():
+    footpaths = [
+        Footpath("s1", "s2", 60),
+        Footpath("s2", "s3", 70),
+        Footpath("s1", "s3", 90),
+    ]
+
+    footpaths_per_from_to_stop_id = {(f.from_stop_id, f.to_stop_id): f for f in footpaths}
+
+    make_transitive(footpaths_per_from_to_stop_id)
+
+    assert 3 == len(footpaths_per_from_to_stop_id)

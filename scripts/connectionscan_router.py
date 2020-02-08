@@ -4,7 +4,7 @@
 import logging
 from collections import defaultdict
 
-from scripts.classes import Journey, JourneyLeg
+from scripts.classes import Journey, JourneyLeg, Footpath
 from scripts.helpers.funs import (hhmmss_to_sec, seconds_to_hhmmss, binary_search)
 from scripts.helpers.my_logging import log_end, log_start
 
@@ -66,6 +66,12 @@ class ConnectionScanData:
                 stop_ids_in_footpaths_not_in_stops))
 
         self.footpaths_per_from_to_stop_id = footpaths_per_from_to_stop_id
+
+        new_footpaths, footpaths_with_time_change = check_for_transitivity(self.footpaths_per_from_to_stop_id)
+        if len(new_footpaths) > 0 or len(footpaths_with_time_change) > 0:
+            msg_str = "footpaths are not transitive: there are {} missing footpaths and {} footpaths" \
+                      " violating the triangle inequality"
+            log.warning(msg_str.format(len(new_footpaths), len(footpaths_with_time_change)))
 
         # trips
         for trip_id, trip in trips_per_id.items():
@@ -455,3 +461,77 @@ class ConnectionScanCore:
             desired_dep_time_hhmmss,
             self.route_optimized_earliest_arrival_with_reconstruction
         )
+
+
+def check_for_transitivity(footpaths_per_from_to_stop_id):
+    """Checks the footpaths for transitivity
+    and returns missing footpaths and modified footpaths violating the triangle inequality.
+
+    More precisely:
+    - if there are three stops s_1, s_2 and s_3 with a footpath from s_1 to s_2 and a footpath from s_2 to s_3,
+    but no footpath from s_1 to s_3, a new footpath from s_1 to s_3 is created (with walking time equal to the sum
+    of the walking time of the two existing footpaths.
+    This new footpath is added to the list returned in the first entry of the returned tuple.
+    - if there are three stops s_1, s_2 and s_3 with a footpath from s_1 to s_2, s_2 to s_3 and s_1 to s_3, but the
+    sum of the walking times of s_1 to s_2 and s_2 to s_3 is smaller than the walking time from s_1 to s_3,
+    a new footpath from s_1 to s_3 is created with walking time equal to the sum of the two other walking times
+    (only if this sum is positive).
+    This new footpath is added to the list returned in the second entry of the returned tuple.
+
+    Args:
+        footpaths_per_from_to_stop_id (dict): footpath per (from_stop_id, to_stop_id)-tuple.
+
+    Returns:
+        tuple: new and modified footpaths (see above for the details).
+    """
+    log_start("checking footpaths for transitivity", log)
+    footpaths_per_from_stop_id = {}
+    for (from_stop_id, _), footpath in footpaths_per_from_to_stop_id.items():
+        footpaths_per_from_stop_id[from_stop_id] = footpaths_per_from_stop_id.get(from_stop_id, []) + [footpath]
+    new_footpaths = []
+    footpaths_with_time_change = []
+    footpaths_per_from_stop_id = dict(footpaths_per_from_stop_id)
+    for from_stop_id, outgoing_footpaths in footpaths_per_from_stop_id.items():
+        for first_footpath in outgoing_footpaths:
+            for second_footpath in footpaths_per_from_stop_id.get(first_footpath.to_stop_id, []):
+                second_to_stop_id = second_footpath.to_stop_id
+                new_wt = first_footpath.walking_time + second_footpath.walking_time
+                if (from_stop_id, second_to_stop_id) not in footpaths_per_from_to_stop_id:
+                    new_footpaths += [Footpath(from_stop_id, second_to_stop_id, new_wt)]
+                elif 0 < new_wt < footpaths_per_from_to_stop_id[(from_stop_id, second_to_stop_id)].walking_time:
+                    footpaths_with_time_change += [Footpath(from_stop_id, second_to_stop_id, new_wt)]
+    log_end()
+    return new_footpaths, footpaths_with_time_change
+
+
+def make_transitive(footpaths_per_from_to_stop_id):
+    """Iteratively adds new footpaths or modifies the walking times until the footpaths are transitive.
+
+    Args:
+        footpaths_per_from_to_stop_id (dict): footpath per (from_stop_id, to_stop_id)-tuple.
+    """
+    log_start("making footpaths transitive", log)
+    n = 0
+    nb_footpaths_added = 0
+    nb_footpaths_changed_time = 0
+    while True:
+        new_footpaths, footpaths_with_time_change = check_for_transitivity(footpaths_per_from_to_stop_id)
+        if len(new_footpaths) > 0 or len(footpaths_with_time_change) > 0:
+            for new_footpath in new_footpaths:
+                footpaths_per_from_to_stop_id[new_footpath.from_stop_id, new_footpath.to_stop_id] = new_footpath
+            for mod_footpath in footpaths_with_time_change:
+                footpaths_per_from_to_stop_id[mod_footpath.from_stop_id, mod_footpath.to_stop_id] = mod_footpath
+            str_msg = "iteration {}: # footpaths added: {}, # footpaths with changed walking time: {}"
+            log.info(str_msg.format(n, len(new_footpaths), len(footpaths_with_time_change)))
+            n += 1
+            nb_footpaths_added += len(new_footpaths)
+            nb_footpaths_changed_time += len(footpaths_with_time_change)
+        else:
+            break
+    str_msg = "# iterations: {}, # footpaths added: {}, # footpaths with changed time: {}, # footpaths total: {}"
+    log_end(additional_message=str_msg.format(
+        n,
+        nb_footpaths_added,
+        nb_footpaths_changed_time,
+        len(footpaths_per_from_to_stop_id))
+    )

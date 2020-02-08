@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """This module collects some helper functions."""
+import logging
 from datetime import date
+
+log = logging.getLogger(__name__)
 
 
 def parse_yymmdd(yymmdd_str):
@@ -52,7 +55,7 @@ def seconds_to_hhmmss(seconds):
     """Parses the number of seconds after midnight and returns the corresponding HH:MM:SS-string.
 
     Args:
-        seconds (int): number of seconds after midnight.
+        seconds (float): number of seconds after midnight.
 
     Returns:
         str: the corresponding HH:MM:SS-string.
