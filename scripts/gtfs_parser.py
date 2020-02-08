@@ -11,7 +11,7 @@ from pyproj import Transformer
 from scipy import spatial
 
 from scripts.classes import Connection, Footpath, Stop, Trip, TripType
-from scripts.connectionscan_router import ConnectionScanData
+from scripts.connectionscan_router import ConnectionScanData, make_transitive
 from scripts.helpers.funs import hhmmss_to_sec, parse_yymmdd
 from scripts.helpers.my_logging import log_end, log_start
 
@@ -30,7 +30,8 @@ def parse_gtfs(
         desired_date,
         add_beeline_footpaths=True,
         beeline_distance=100.0,
-        walking_speed=2.0 / 3.6
+        walking_speed=2.0 / 3.6,
+        make_footpaths_transitive=False
 ):
     """Parses a gtfs-file and returns the corresponding timetable data of a specific date.
 
@@ -46,6 +47,8 @@ def parse_gtfs(
         the beeline footpaths (only relevant if add_beeline_footpaths is True).
         walking_speed (obj:`float`, optional): walking speed in meters per second for calculating the walking time
         of the created beeline footpaths (only relevant if add_beeline_footpaths is True).
+        make_footpaths_transitive (obj:`bool`, optional): True if the footpaths are to be made transitive, else False.
+        Making footpaths transitive can lead to long running times and implausible results.
 
     Returns:
         ConnectionScanData: timetable data of the specific date.
@@ -143,6 +146,11 @@ def parse_gtfs(
             create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beeline_distance, walking_speed)
         else:
             log.info("adding beeline footpaths is deactivated")
+
+        if make_footpaths_transitive:
+            make_transitive(footpaths_per_from_to_stop_id)
+        else:
+            log.info("making footpaths transitive is deactivated")
 
         log_start("parsing calendar.txt and calendar_dates.txt", log)
         service_available_at_date_per_service_id = get_service_available_at_date_per_service_id(zip_file, desired_date)
