@@ -68,6 +68,11 @@ and a folder where you want to place your virtual environment folder
    - Link the chosen gtfs-feed in the notebook, parse it into a ```ConnectionScanCore``` object
    and run your implementation of the Connection Scan Algorithm on your preferred source-target-stop-relations. Are
    the results as expected? Does the optimization in task 3 improve the runtime?
+   - Hint: In ```notebooks/route_on_real_world_gtfs.ipynb``` the download, parsing and some routing queries for 
+   Switzerland, Paris, New York subway and Madrid is already prepared. You can also start with this if you don't have a 
+   preferred gtfs feed. Note that you need an internet-connection to download the gtfs-data and more than 1.5 GB of 
+   memory to load the gtfs-data into memory.
+
 
 ## Prerequisites
 To successfully complete the tasks you need some experience with algorithms and a solid 
