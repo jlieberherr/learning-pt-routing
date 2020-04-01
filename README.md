@@ -41,8 +41,8 @@ IDE (i.e. [Visual Studio Code](https://code.visualstudio.com/) or
 and a folder where you want to place your virtual environment folder 
 * Create the virtual environment:
    - Open a command line, navigate to the folder where you want to place your virtual environment
-   - Create the virtual environment with ```path/to/your/python/3.7/installation/python.exe -m venv YOUR_NAME_OF_THE_VENV```
-   - Activate the virtual environment with ```YOUR_NAME_OF_THE_VENV/Scripts/activate``` 
+   - Create the virtual environment with ```virtualenv -p path/to/your/python/3.7/installation/python.exe YOUR_NAME_OF_THE_VENV```.
+   - Activate the virtual environment with ```YOUR_NAME_OF_THE_VENV/Scripts/activate```
 * Install the project:
    - Navigate to the folder where you want to place the development folder
    - Clone the project with ```git clone https://github.com/jlieberherr/learning-pt-routing.git```
