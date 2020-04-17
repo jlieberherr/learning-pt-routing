@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """This module collects some helper functions."""
 import logging
+import math
 from datetime import date
 
 log = logging.getLogger(__name__)
@@ -100,3 +101,34 @@ def binary_search(sorted_list, value, value_picker):
                 return binary_search_recursive(from_index, mid - 1)
 
     return binary_search_recursive(0, n - 1)
+
+
+def distance(p, q):
+    """Calculates the euclidean distance between two points in a cartesian coordinate system.
+
+        Args:
+            p (tuple, list): first point as [x, y]-list.
+            q (tuple, list): first point as [x, y]-list.
+
+        Returns:
+            float: the euclidean distance between the two points.
+        """
+    return math.sqrt(sum([(a - b) ** 2 for a, b in zip(p, q)]))
+
+
+def wgs84_to_spherical_mercator(lon, lat):
+    """Converts lon-lat-coordinates (WGS84, EPSG:4326) to cartesian coordinates in EPSG:900913 (spherical mercator).
+    Note that distances can be very inaccurate with this projection, see
+    https://gis.stackexchange.com/questions/184648/whats-the-accuracy-of-web-mercator-epsg3857.
+
+    Args:
+        lon (float): longitude data of the point.
+        lat (float): latitude data of the point.
+
+    Returns:
+        list: the x- and y-coordinate of the point in a list.
+    """
+    x = lon * 20037508.34 / 180;
+    y = math.log(math.tan((90 + lat) * math.pi / 360)) / (math.pi / 180);
+    y = y * 20037508.34 / 180;
+    return [x, y]
