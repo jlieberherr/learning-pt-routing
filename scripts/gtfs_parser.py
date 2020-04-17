@@ -6,13 +6,11 @@ import logging
 from io import TextIOWrapper
 from zipfile import ZipFile
 
-import math
-from pyproj import Transformer
 from scipy import spatial
 
 from scripts.classes import Connection, Footpath, Stop, Trip, TripType
 from scripts.connectionscan_router import ConnectionScanData, make_transitive
-from scripts.helpers.funs import hhmmss_to_sec, parse_yymmdd
+from scripts.helpers.funs import hhmmss_to_sec, parse_yymmdd, wgs84_to_spherical_mercator, distance
 from scripts.helpers.my_logging import log_end, log_start
 
 ENCODING = "utf-8-sig"  # we use utf-8-sig since gtfs-data from switzerland are encoded in utf-8-with-bom
@@ -303,12 +301,10 @@ def create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beelin
     """
     nb_footpaths_perimeter = 0
     log_start("adding footpaths in beeline perimeter with radius {}m".format(beeline_distance), log)
-    # epsg:4326 is WGS84, epsg:4088 is world equidistant cylindrical (sphere)
-    transformer = Transformer.from_proj(4326, 4088)
     log_start("transforming coordinates", log)
     stop_list = list(stops_per_id.values())
     easting_northing_list = [(s.easting, s.northing) for s in stop_list]
-    x_y_coordinates = [transformer.transform(p[0], p[1]) for p in easting_northing_list]
+    x_y_coordinates = [wgs84_to_spherical_mercator(p[0], p[1]) for p in easting_northing_list]
     log_end()
     log_start("creating quadtree for fast perimeter search", log)
     tree = spatial.KDTree(x_y_coordinates)
@@ -318,8 +314,10 @@ def create_beeline_footpaths(stops_per_id, footpaths_per_from_to_stop_id, beelin
         x_y_a_stop = x_y_coordinates[ind]
         for another_ind in tree.query_ball_point(x_y_a_stop, beeline_distance):
             x_y_another_stop = x_y_coordinates[another_ind]
-            distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(x_y_a_stop, x_y_another_stop)]))  # in meters
-            walking_time = distance / walking_speed
+            d = distance(x_y_a_stop, x_y_another_stop)
+            # distance in meters.
+            # note that distances can be very inaccurate (up to factor 2 on a lat of 60°), but this should be ok here.
+            walking_time = d / walking_speed
             another_stop = stop_list[another_ind]
             key = (a_stop.id, another_stop.id)
             if key not in footpaths_per_from_to_stop_id:
