@@ -49,8 +49,8 @@ and a folder where you want to place your virtual environment folder
    - Navigate to the now created development folder with ```cd learning-pt-routing```
    - Install the necessary python packages 
 (the virtual environment must be activated) with ```pip install -r requirements.txt```
-   - Run the default tests with ```pytest tests/a_default```. 
-   If you run all tests (with ```pytest```) all tests in ```tests/b_router``` will fail. Your task is to make them green.
+   - Run the default tests with ```pytest tests/a_default```. If these tests are passed (are on green) the installation 
+   should be ok and you can continue with the next step.
 * Create your branch and start coding:
    - Create your new branch with ```git branch NAME_OF_YOUR_NEW_BRANCH```
    - Checkout your new branch with ```git checkout NAME_OF_YOUR_NEW_BRANCH```
